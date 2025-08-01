@@ -1,0 +1,20 @@
+{
+  "name": "frogbot",
+  "version": "1.0.0",
+  "description": "A Discord bot for doing frog stuff",
+  "homepage": "https://github.com/acroos/frogbot#readme",
+  "bugs": {
+    "url": "https://github.com/acroos/frogbot/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acroos/frogbot.git"
+  },
+  "license": "Unlicense",
+  "author": "acroos",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
