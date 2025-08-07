@@ -63,6 +63,7 @@ export default async function JoinGame(playerId, gameId) {
 }
 
 async function validateJoinGameConditions(game, playerId) {
+  const gameId = game.gameThreadId
   // Validate if player is already in the game
   if (game.players.includes(playerId)) {
     throw new PlayerAlreadyInGameError(playerId, gameId)

@@ -75,7 +75,9 @@ export default async function CreateGame(
     eloRequirement: eloRequirement,
     voiceChat: voiceChat,
     players: [creatorId],
-    settingsVotes: {}
+    selectedSettingId: undefined,
+    settingsVotes: {},
+    winnerVotes: {}
   }
   console.log(`New game: ${JSON.stringify(newGame)}`)
   

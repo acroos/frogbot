@@ -29,10 +29,10 @@ export default async function SettingsPollSelectionMade(
   }
 
   await addSettingsVoteToGame(gameId, playerId, selectionId).then(async () => {
-    const finalizedSettings = await maybeFinalizeVote(gameId)
-    console.log(`Finalized settings: ${JSON.stringify(finalizedSettings)}`)
-
-    if (finalizedSettings) {
+    const game = await maybeFinalizeVote(gameId)
+    if (game) {
+      const finalizedSettings = game.settingsOptions.find((option) => option.settingid === game.selectedSettingId)
+      console.log(`Finalized settings: ${JSON.stringify(finalizedSettings)}`)
       await sendStartGameMessage(gameId, finalizedSettings)
     }
   })
@@ -58,19 +58,21 @@ async function addSettingsVoteToGame(gameId, playerId, selectedSettingId) {
 }
 
 async function maybeFinalizeVote(gameId) {
-  const game = await GetGame(gameId)
+  let game = await GetGame(gameId)
   console.log(`Game: ${JSON.stringify(game)}`)
   const votes = Object.values(game.settingsVotes)
   if (votes.length === game.playerCount) {
     console.log(`Voting completed; Votes: ${JSON.stringify(votes)}`)
     const selectedSettings = votes[Math.floor(Math.random() * votes.length)]
-    return selectedSettings
+    game.selectedSettingId = selectedSettings.settingid
+    return SetGame(gameId, game)
   }
   return null
 }
 
 async function sendStartGameMessage(gameId, selectedSettings) {
   const game = await GetGame(gameId)
+  console.log(`Game right before starting: ${JSON.stringify(game)}`)
   const players = await Promise.all(game.players.map((playerId) => FetchPlayerInfo(playerId)));
 
   const components = [

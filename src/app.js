@@ -3,6 +3,7 @@ import {
   InteractionResponseFlags,
   InteractionResponseType,
   InteractionType,
+  MessageComponentTypes,
   verifyKeyMiddleware,
 } from 'discord-interactions'
 import CONFIG from './config.js'
@@ -14,6 +15,7 @@ import {
 import JoinGame, { JoinGameError } from './commands/join-game.js'
 import SettingsPollSelectionMade from './commands/settings-poll-selection.js'
 import GenericErrorHandler from './utils/error-handler.js'
+import WinnerSelection from './commands/winner-selection.js'
 
 async function handleCreateGameCommand(req, res) {
   const { data } = req.body
@@ -122,6 +124,34 @@ async function handleSettingsPollSelection(req, res, customId) {
   }
 }
 
+async function handleWinnerPollSelection(req, res, customId) {
+  const { data } = req.body
+  // Handle settings poll interaction
+  const threadId = customId.split('_')[2]
+  const playerId = ReadPlayerIdFromContext(req.body)
+  const winnerId = data.values[0]
+
+  const selectionAccepted = await WinnerSelection(threadId, playerId, winnerId)
+
+  if (selectionAccepted) {
+    return res.send({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        flags: InteractionResponseFlags.EPHEMERAL,
+        content: `Your selection of <@${winnerId}> as winner has been counted`
+      }
+    })
+  } else {
+    return res.send({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        flags: InteractionResponseFlags.EPHEMERAL,
+        content: `Your selection of <@${winnerId}> as winner could not be counted.  Please try again.`
+      }
+    })
+  }
+}
+
 export default async function CreateApp() {
   // Create an express app
   const app = express()
@@ -173,15 +203,7 @@ export default async function CreateApp() {
       } else if (custom_id.startsWith('settings_poll_')) {
         return await handleSettingsPollSelection(req, res, custom_id)
       } else if (custom_id.startsWith('winner_selection_')) {
-        console.log(`Winner was selected!`)
-        const { data } = req.body
-        // Handle settings poll interaction
-        const gameId = custom_id.split('_')[2]
-        const playerId = ReadPlayerIdFromContext(req.body)
-        const winnerId = data.values[0]
-        console.log(
-          `Game ID: ${gameId}; winner ID: ${winnerId}, player ID: ${playerId}`
-        )
+        return await handleWinnerPollSelection(req, res, custom_id)
       }
 
       console.error(`unknown component interaction: ${custom_id}`)
