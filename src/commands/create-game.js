@@ -68,6 +68,7 @@ export default async function CreateGame(
   ])
 
   const settingsOptions = promiseResults[0]
+  const pingMessage = promiseResults[3]
 
   const newGame = {
     gameThreadId: gameThreadId,
@@ -79,7 +80,8 @@ export default async function CreateGame(
     players: [creatorId],
     selectedSettingId: undefined,
     settingsVotes: {},
-    winnerVotes: {}
+    winnerVotes: {},
+    pingMessageId: pingMessage.id
   }
   
   const savedGame = await SetGame(gameThreadId, newGame)

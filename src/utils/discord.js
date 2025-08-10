@@ -46,7 +46,10 @@ export async function SendMessageWithContent(channelId, content) {
   if (!result.ok) {
     throw new Error(`Failed to send message: ${result.statusText}`)
   }
-  return result
+
+  const json = await result.json()
+  console.log(`Message response: ${JSON.stringify(json)}`)
+  return json
 }
 
 export async function SendMessageWithComponents(channelId, components) {
@@ -60,7 +63,10 @@ export async function SendMessageWithComponents(channelId, components) {
   if (!result.ok) {
     throw new Error(`Failed to send message with components: ${result.statusText}`)
   }
-  return result
+
+  const json = await result.json()
+  console.log(`Message response: ${JSON.stringify(json)}`)
+  return json
 }
 
 export async function AddPlayerToThread(threadId, playerId) {
@@ -70,7 +76,9 @@ export async function AddPlayerToThread(threadId, playerId) {
   if (!result.ok) {
     throw new Error(`Failed to add player to thread: ${result.statusText}`)
   }
-  return result
+
+  const json = await result.json()
+  return json
 }
 
 export function ReadDiscordCommandOptionFromData(data, name, defaultValue = null) {
