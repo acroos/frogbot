@@ -2,6 +2,10 @@ import { SendMessageWithContent } from "../utils/discord.js";
 import { FriendsOfRiskRequest } from "../utils/friends-of-risk.js";
 import { GetGame, SetGame } from "../utils/redis.js";
 
+// TODO:
+// - Close thread
+// - Remove game
+// - Remove all players from "currently playing"
 export default async function WinnerSelection(gameId, playerId, winnerId) {
   let game = await GetGame(gameId)
 

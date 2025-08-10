@@ -35,6 +35,9 @@ const DEFAULT_PLAYER_COUNT = 4 // Default player count
 const DEFAULT_ELO_REQUIREMENT = 0 // Default ELO requirement
 const DEFAULT_VOICE_CHAT = false // Default voice chat setting
 
+// TODO:
+// - Don't allow creating game if already in game
+// - Add concept of player is currently playing
 export default async function CreateGame(
   creatorId,
   playerCount = null,

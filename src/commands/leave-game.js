@@ -7,6 +7,10 @@ export class LeaveGameError extends Error {
   }
 }
 
+// TODO:
+// - Don't allow host to leave game
+// - Remove player from thread
+// - If last player leaves game, cancel game
 export default async function LeaveGame(playerId, gameId) {
   // Fetch the game from Redis
   let game = await GetGame(gameId)
