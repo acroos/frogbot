@@ -53,7 +53,7 @@ export async function GetFinalizedGames() {
 
 export async function SetFinalizedGames(gameIds) {
   try {
-    await redisClient.set(FINALIZED_GAMES_KEY, gameIds)
+    await redisClient.set(FINALIZED_GAMES_KEY, JSON.stringify(gameIds))
   } catch (error) {
     console.error('Error setting finalized games', error)
   }
