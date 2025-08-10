@@ -81,7 +81,7 @@ async function pingRemainingVotes(gameId) {
 
   await SendMessageWithContent(
     gameId,
-    `${remainingVoters.map((voterId) => `<@${voterId}> `)}\nDon't forget to vote for your prferred settings with the selection menu above!`
+    `${remainingVoters.map((voterId) => `<@${voterId}> `)}\nDon't forget to vote for your preferred settings with the selection menu above!`
   )
 }
 
