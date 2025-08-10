@@ -1,5 +1,6 @@
 import { createClient } from 'redis'
 import CONFIG from '../config.js'
+import { LockThread } from './discord.js'
 
 const redisClient = await createClient({
   socket: {
@@ -40,6 +41,18 @@ export async function RemoveGame(gameId) {
     await redisClient.del(gameIdToRedisKey(gameId))
   } catch (error) {
     console.error('Error removing game', error)
+  }
+}
+
+export async function LockThreads() {
+  for await (const gameKey of redisClient.scanIterator({MATCH: "game*"})) {
+    const game = await redisClient.get(gameKey)
+
+    if (game.winner) {
+      await LockThread(game.gameThreadId)
+    } else {
+      console.log(`Found open game: ${game}`)
+    }
   }
 }
 

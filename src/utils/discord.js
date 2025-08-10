@@ -1,6 +1,7 @@
 import { InteractionResponseFlags } from 'discord-interactions'
 import CONFIG from '../config.js'
 
+/* Discord API functions */
 export async function DiscordRequest(endpoint, options) {
   // append endpoint to root API URL
   const url = `https://discord.com/api/v10/${endpoint}`
@@ -125,6 +126,8 @@ export async function LockThread(threadId) {
   return result
 }
 
+
+/* Discord helpers */
 export function ReadDiscordCommandOptionFromData(data, name, defaultValue = null) {
   // Find the option in the data
   const option = data.options.find((opt) => opt.name === name)

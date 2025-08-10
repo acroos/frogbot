@@ -3,9 +3,9 @@ import {
   InteractionResponseFlags,
   InteractionResponseType,
   InteractionType,
-  MessageComponentTypes,
   verifyKeyMiddleware,
 } from 'discord-interactions'
+import cron from 'node-cron';
 import CONFIG from './config.js'
 import CreateGame, { CreateGameError } from './commands/create-game.js'
 import {
@@ -17,6 +17,7 @@ import LeaveGame, { LeaveGameError } from './commands/leave-game.js'
 import SettingsPollSelectionMade from './commands/settings-poll-selection.js'
 import GenericErrorHandler from './utils/error-handler.js'
 import WinnerSelection from './commands/winner-selection.js'
+import { LockThreads } from './utils/redis.js';
 
 async function handleCreateGameCommand(req, res) {
   const { data } = req.body
@@ -185,7 +186,10 @@ async function handleWinnerPollSelection(req, res, customId) {
 }
 
 export default async function CreateApp() {
-  console.log(`Config: ${JSON.stringify(CONFIG)}`)
+  cron.schedule('* * * * *', async () => {
+    await LockThreads()
+  });
+
   // Create an express app
   const app = express()
 
