@@ -4,6 +4,12 @@ import { GetGame, SetGame } from "../utils/redis.js";
 
 export default async function WinnerSelection(gameId, playerId, winnerId) {
   let game = await GetGame(gameId)
+
+  const preVoteCount = Object.keys(game.winnerVotes).length
+
+  if (preVoteCount > (game.playerCount / 2)) {
+    return false
+  }
   
   game.winnerVotes[playerId] = winnerId
   
@@ -12,6 +18,7 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
   const voteCount = Object.keys(game.winnerVotes).length
   
   if (voteCount > (game.playerCount / 2)) {
+    console.log(`Votes: ${JSON.stringify(game.winnerVotes)}`)
     const winner = determineWinner(Object.values(game.winnerVotes))
 
     const response = await addGameToFriendsOfRisk(gameId, game.selectedSettingId, game.players, winnerId)
@@ -29,11 +36,13 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
 
 async function pingRemainingVotes(gameId) {
   const game = await GetGame(gameId)
-  const remainingVoters = game.players - Object.keys(game.winnerVotes)
+  const alreadyVoted = Object.keys(game.winnerVotes)
+  const remainingVoters = game.players.filter((playerId) => !alreadyVoted.includes(playerId))
 
   await SendMessageWithContent(gameId, `${remainingVoters.map((voterId) => `<@${voterId}> `)}\nDon't forget to vote for the winner with the selection menu above!`)
 }
 
+// TODO: fix this so it requires _majority for same person_
 function determineWinner(votes) {
   let voteCounts = {}
   let maxCount = 0

@@ -177,14 +177,14 @@ async function sendInitialMessage(gameId, creatorId, playerCount) {
       components: [
         {
           type: MessageComponentTypes.BUTTON,
-          custom_id: `leave_game_${gameThreadId}`,
+          custom_id: `leave_game_${gameId}`,
           label: 'Leave Game',
           style: ButtonStyleTypes.PRIMARY,
         },
       ],
     },
   ]
-  await SendMessageWithComponents(gameThreadId, components)
+  await SendMessageWithComponents(gameId, components)
 }
 
 async function fetchSettingsOptions(playerCount) {

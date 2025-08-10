@@ -76,7 +76,8 @@ async function maybeFinalizeVote(gameId) {
 
 async function pingRemainingVotes(gameId) {
   const game = await GetGame(gameId)
-  const remainingVoters = game.players - Object.keys(game.settingsVotes)
+  const alreadyVoted = Object.keys(game.settingsVotes)
+  const remainingVoters = game.players.filter((playerId) => !alreadyVoted.includes(playerId))
 
   await SendMessageWithContent(
     gameId,
