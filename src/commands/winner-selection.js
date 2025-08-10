@@ -1,4 +1,4 @@
-import { SendMessageWithContent } from "../utils/discord.js";
+import { LockThread, SendMessageWithContent } from "../utils/discord.js";
 import { FriendsOfRiskRequest } from "../utils/friends-of-risk.js";
 import { GetGame, SetGame } from "../utils/redis.js";
 
@@ -41,6 +41,7 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
       game = await SetGame(gameId, game)
 
       await SendMessageWithContent(gameId, `Congratulations to the winner <@${winner}>!  The game has been stored on FriendsOfRisk, you should see the results live shortly.`)
+      await LockThread(gameId)
     }
   } else {
     await pingRemainingVotes(gameId)
