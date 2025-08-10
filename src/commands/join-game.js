@@ -1,6 +1,6 @@
 import { MessageComponentTypes } from 'discord-interactions'
-import { AddPlayerToThread, SendMessageWithComponents, SendMessageWithContent } from '../utils/discord.js'
-import { FetchPlayerInfo, FriendsOfRiskRequest } from '../utils/friends-of-risk.js'
+import { AddPlayerToThread, SendMessageWithComponents, SendMessageWithContent, UpdateMessageWithContent } from '../utils/discord.js'
+import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
 import { GetGame, SetGame } from '../utils/redis.js'
 
 export class JoinGameError extends Error {
@@ -32,6 +32,7 @@ export default async function JoinGame(playerId, gameId) {
   if (game.playerCount === game.players.length) {
     // Send the initial message in the game thread with settings options
     await sendLobbyFullMessage(gameId)
+    await updatePingMessage(gameId)
   } else {
     await sendWelcomeMessage(gameId, playerId)
   }
@@ -97,6 +98,14 @@ async function sendLobbyFullMessage(gameId) {
     },
   ]
   await SendMessageWithComponents(gameId, components)
+}
+
+async function updatePingMessage(gameId) {
+  const game = await GetGame(gameId)
+
+  const content = `Risk competitive lounge game ${gameId} (started by <@${game.creatorId}>) started.\n\nKeep an eye out for the next one!`
+
+  await UpdateMessageWithContent(gameId, game.pingMessageId, content)
 }
 
 async function sendWelcomeMessage(gameId, playerId) {

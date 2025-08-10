@@ -48,7 +48,7 @@ export async function SendMessageWithContent(channelId, content) {
   }
 
   const json = await result.json()
-  console.log(`Message response: ${JSON.stringify(json)}`)
+  console.log(`Message send response: ${JSON.stringify(json)}`)
   return json
 }
 
@@ -65,7 +65,25 @@ export async function SendMessageWithComponents(channelId, components) {
   }
 
   const json = await result.json()
-  console.log(`Message response: ${JSON.stringify(json)}`)
+  console.log(`Message send response: ${JSON.stringify(json)}`)
+  return json
+}
+
+export async function UpdateMessageWithContent(channelId, messageId, content) {
+  const result = await DiscordRequest(`channels/${channelId}/messages/${messageId}`, {
+      method: 'PATCH',
+      body: {
+        content: content
+      }
+    }
+  )
+
+    if (!result.ok) {
+    throw new Error(`Failed to send message: ${result.statusText}`)
+  }
+
+  const json = await result.json()
+  console.log(`Message update response: ${JSON.stringify(json)}`)
   return json
 }
 
@@ -77,8 +95,7 @@ export async function AddPlayerToThread(threadId, playerId) {
     throw new Error(`Failed to add player to thread: ${result.statusText}`)
   }
 
-  const json = await result.json()
-  return json
+  return result
 }
 
 export function ReadDiscordCommandOptionFromData(data, name, defaultValue = null) {
