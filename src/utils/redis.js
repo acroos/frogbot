@@ -46,15 +46,15 @@ export async function RemoveGame(gameId) {
 
 export async function LockThreads() {
   for await (const keys of redisClient.scanIterator()) {
-    console.log(`Keys: ${JSON.stringify(keys)}`)
     for(const key of keys) {
-      console.log(`Key: ${key}`)
       const game = await redisClient.get(key)
 
       if (game.winner) {
-        await LockThread(game.gameThreadId)
-      } else {
-        console.log(`Found open game: ${game}`)
+        console.log(`Found finished game: ${game.gameThreadId}`)
+        const response = await LockThread(game.gameThreadId)
+        if (!response.ok) {
+          console.log(`Could not lock game: ${game.gameThreadId}`)
+        }
       }
     }
   }
