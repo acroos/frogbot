@@ -10,8 +10,8 @@ env:
   ECR_REPOSITORY: acroos/frogbot
 
 jobs:
-  deploy:
-    name: Deploy
+  push_image:
+    name: Push Image
     runs-on: ubuntu-latest
     environment: production
 
