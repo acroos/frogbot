@@ -59,6 +59,28 @@ export async function SetFinalizedGames(gameIds) {
   }
 }
 
+export async function GetPlayerInGame(playerId) {
+  return await redisClient.get(playerIdToActiveGameId(playerId))
+}
+
+export async function SetPlayerInGame(playerId, gameId) {
+  await redisClient.set(playerIdToActiveGameId(playerId), gameId)
+}
+
+export async function RemovePlayerInGame(playerId) {
+  await redisClient.del(playerIdToActiveGameId(playerId))
+}
+
+export async function RemoveAllPlayersInGame(gameId) {
+  const game = await GetGame(gameId)
+  if (!game) {
+    throw new Error(`Could not find game with ID: ${gameId}`)
+  }
+  for(let playerId of game.players) {
+    await RemovePlayerInGame(playerId)
+  }
+}
+
 export async function ScanMap(mapFunc) {
   for await (const keys of redisClient.scanIterator()) {
     for(const key of keys) {
@@ -89,4 +111,8 @@ export async function LockThreads() {
 
 function gameIdToRedisKey(gameId) {
   return `game-${gameId}`
+}
+
+function playerIdToActiveGameId(playerId) {
+  return `active-player-${playerId}`
 }

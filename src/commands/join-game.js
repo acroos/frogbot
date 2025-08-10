@@ -1,7 +1,7 @@
 import { MessageComponentTypes } from 'discord-interactions'
 import { AddPlayerToThread, SendMessageWithComponents, SendMessageWithContent, UpdateMessageWithComponents } from '../utils/discord.js'
 import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
-import { GetGame, SetGame } from '../utils/redis.js'
+import { GetGame, GetPlayerInGame, SetGame, SetPlayerInGame } from '../utils/redis.js'
 import CONFIG from '../config.js';
 
 export class JoinGameError extends Error {
@@ -27,6 +27,9 @@ export default async function JoinGame(playerId, gameId) {
   // Add the player to the game thread
   await AddPlayerToThread(gameId, playerId)
 
+  // Set player as in game
+  await SetPlayerInGame(playerId, gameId)
+
   game.players.push(playerId) // Add player to the game
   game = await SetGame(gameId, game) // Update the game in Redis
 
@@ -43,9 +46,11 @@ export default async function JoinGame(playerId, gameId) {
 
 async function validateJoinGameConditions(game, playerId) {
   const gameId = game.gameThreadId
-  // Validate if player is already in the game
-  if (game.players.includes(playerId)) {
-    throw new JoinGameError(`Player ${playerId} is already in game ${gameId}.`)
+  const playerAlreadyInGame = await GetPlayerInGame(playerId)
+
+  // Validate if player is already in a game
+  if (playerAlreadyInGame) {
+    throw new JoinGameError(`Player ${playerId} is already in game ${gameId}`)
   }
 
   // Validate if game is already full

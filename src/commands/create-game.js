@@ -13,7 +13,7 @@ import {
   FriendsOfRiskRequest,
   FetchPlayerInfo,
 } from '../utils/friends-of-risk.js'
-import { SetGame } from '../utils/redis.js'
+import { GetPlayerInGame, SetGame, SetPlayerInGame } from '../utils/redis.js'
 
 export class CreateGameError extends Error {
   constructor(message, options) {
@@ -52,6 +52,12 @@ export default async function CreateGame(
   // Validate arguments
   validateArguments(playerCount, eloRequirement, voiceChat)
 
+  // Validate player is not already in game
+  const creatorCurrentGame = await GetPlayerInGame(creatorId)
+  if (creatorCurrentGame) {
+    throw new CreateGameError(`Player ${creatorId} is already in game ${creatorCurrentGame}`)
+  }
+
   const creatorPlayerInfo = await FetchPlayerInfo(creatorId)
 
   // Validate creator's ELO
@@ -64,7 +70,8 @@ export default async function CreateGame(
     fetchSettingsOptions(playerCount), // Fetch the settings players can vote on
     sendInitialMessage(gameThreadId, creatorId, playerCount), // Send the initial message in the thread
     AddPlayerToThread(gameThreadId, creatorId), // Add the creator to the game thread
-    sendPingMessageInChannel(gameThreadId, creatorId, playerCount, eloRequirement, voiceChat) // Send a ping message in the lounge channel to notify players
+    sendPingMessageInChannel(gameThreadId, creatorId, playerCount, eloRequirement, voiceChat), // Send a ping message in the lounge channel to notify players
+    SetPlayerInGame(creatorId, gameThreadId)
   ])
 
   const settingsOptions = promiseResults[0]

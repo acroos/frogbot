@@ -1,6 +1,6 @@
 import { LockThread, SendMessageWithContent } from "../utils/discord.js";
 import { FriendsOfRiskRequest } from "../utils/friends-of-risk.js";
-import { GetGame, SetGame } from "../utils/redis.js";
+import { GetGame, RemoveAllPlayersInGame, RemovePlayerInGame, SetGame } from "../utils/redis.js";
 
 // TODO:
 // - Close thread
@@ -13,8 +13,6 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
     6: 4
   }
   let game = await GetGame(gameId)
-
-  console.log(`Game before winner selection: ${JSON.stringify(game)}`)
 
   if (game.winner) {
     return false
@@ -41,8 +39,11 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
       game.completedAt = Date.now()
       game = await SetGame(gameId, game)
 
-      await SendMessageWithContent(gameId, `Congratulations to the winner <@${winner}>!  The game has been stored on FriendsOfRisk, you should see the results live shortly.`)
-      await LockThread(gameId)
+      await Promise.all(
+        SendMessageWithContent(gameId, `Congratulations to the winner <@${winner}>!  The game has been stored on FriendsOfRisk, you should see the results live shortly.`),
+        LockThread(gameId),
+        RemoveAllPlayersInGame(gameId)
+      )
     }
   } else {
     await pingRemainingVotes(gameId)
@@ -59,7 +60,6 @@ async function pingRemainingVotes(gameId) {
   await SendMessageWithContent(gameId, `${remainingVoters.map((voterId) => `<@${voterId}> `)}\nDon't forget to vote for the winner with the selection menu above!`)
 }
 
-// TODO: fix this so it requires _majority for same person_
 function determineWinner(votes, requiredToWinCount) {
   let voteCounts = {}
   for(let vote of votes) {
