@@ -7,6 +7,11 @@ import { GetGame, SetGame } from "../utils/redis.js";
 // - Remove game
 // - Remove all players from "currently playing"
 export default async function WinnerSelection(gameId, playerId, winnerId) {
+  const requiredVotesMap = {
+    4: 3,
+    5: 3,
+    6: 4
+  }
   let game = await GetGame(gameId)
 
   const preVoteCount = Object.keys(game.winnerVotes).length
@@ -20,17 +25,21 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
   game = await SetGame(gameId, game)
 
   const voteCount = Object.keys(game.winnerVotes).length
+  const requiredVotes = requiredVotesMap[game.playerCount]
   
-  if (voteCount > (game.playerCount / 2)) {
+  if (voteCount >= requiredVotes) {
     console.log(`Votes: ${JSON.stringify(game.winnerVotes)}`)
-    const winner = determineWinner(Object.values(game.winnerVotes))
+    const winner = determineWinner(Object.values(game.winnerVotes), requiredVotes)
+    if (winner === null && voteCount === game.playerCount) {
+      await SendMessageWithContent(gameId, `Winner could not be determined, nobody received a majority of votes.  Current votes: \n${Object.entries(game.winnerVotes).map(([voter, winner]) => `- Voter: <@${voter}> -> Winner: <@${winner}>`).join('\n')}`)
+    } else if (winner !== null) {
+      const response = await addGameToFriendsOfRisk(gameId, game.selectedSettingId, game.players, winnerId)
+      if (!response.ok) {
+        return false
+      }
 
-    const response = await addGameToFriendsOfRisk(gameId, game.selectedSettingId, game.players, winnerId)
-    if (!response.ok) {
-      return false
+      await SendMessageWithContent(gameId, `Congratulations to the winner <@${winner}>!  The game has been stored on FriendsOfRisk, you shoudl see the results live shortly.`)
     }
-
-    await SendMessageWithContent(gameId, `Congratulations to the winner <@${winner}>!  The game has been stored on FriendsOfRisk, you shoudl see the results live shortly.`)
   } else {
     await pingRemainingVotes(gameId)
   }
@@ -47,19 +56,16 @@ async function pingRemainingVotes(gameId) {
 }
 
 // TODO: fix this so it requires _majority for same person_
-function determineWinner(votes) {
+function determineWinner(votes, requiredToWinCount) {
   let voteCounts = {}
-  let maxCount = 0
-  let winner = null
   for(let vote of votes) {
     voteCounts[vote] = (voteCounts[vote] || 0) + 1;
-    if (voteCounts[vote] > maxCount) {
-      maxCount = voteCounts[vote]
-      winner = vote
+    if (voteCounts[vote] >= requiredToWinCount) {
+      return vote
     }
   }
 
-  return winner
+  return null
 }
 
 async function addGameToFriendsOfRisk(gameId, settingsId, playerIds, winnerId) {
