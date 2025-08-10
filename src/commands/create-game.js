@@ -58,15 +58,14 @@ export default async function CreateGame(
   const gameThreadId = await createGameThread(creatorPlayerInfo.name, playerCount, eloRequirement, voiceChat)
 
   const promiseResults = await Promise.all([
-    fetchSettingsOptions(4), // Fetch the settings players can vote on
-    SendMessageWithContent(gameThreadId, `## New game created by <@${creatorId}>\n\nSit tight for now, once ${playerCount} players are here, we'll vote on the settings to play.`),
+    fetchSettingsOptions(playerCount), // Fetch the settings players can vote on
+    sendInitialMessage(gameThreadId, creatorId, playerCount), // Send the initial message in the thread
     AddPlayerToThread(gameThreadId, creatorId), // Add the creator to the game thread
     sendPingMessageInChannel(gameThreadId, creatorId, playerCount, eloRequirement, voiceChat) // Send a ping message in the lounge channel to notify players
   ])
 
   const settingsOptions = promiseResults[0]
 
-  console.log(`Settings: ${JSON.stringify(settingsOptions)}`)
   const newGame = {
     gameThreadId: gameThreadId,
     creatorId: creatorId,
@@ -79,20 +78,18 @@ export default async function CreateGame(
     settingsVotes: {},
     winnerVotes: {}
   }
-  console.log(`New game: ${JSON.stringify(newGame)}`)
   
   const savedGame = await SetGame(gameThreadId, newGame)
-  console.log(`Saved game: ${JSON.stringify(savedGame)}`)
   
   return savedGame // Save the game in Redis
 }
 
 function validateArguments(playerCount, eloRequirement, voiceChat) {
-  // if (playerCount < 4 || playerCount > 6) {
-  //   throw new Error(
-  //     `Invalid player count: ${playerCount}. Must be between 4 and 6.`
-  //   )
-  // }
+  if (playerCount < 4 || playerCount > 6) {
+    throw new Error(
+      `Invalid player count: ${playerCount}. Must be between 4 and 6.`
+    )
+  }
 
   if (typeof eloRequirement !== 'number') {
     throw new Error(
@@ -109,7 +106,6 @@ function validateArguments(playerCount, eloRequirement, voiceChat) {
 
 function validateCreatorElo(creatorData, requiredElo) {
   const creatorElo = creatorData?.ffa_elo_score || 0
-  console.log(`Creator ELO: ${creatorElo}, Required ELO: ${requiredElo}`)
 
   if (!creatorElo || creatorElo < requiredElo) {
     throw new EloRequirementNotMetError(creatorElo, requiredElo)
@@ -170,6 +166,27 @@ async function sendPingMessageInChannel(
   await SendMessageWithComponents(CONFIG.loungeChannelId, components)
 }
 
+async function sendInitialMessage(gameId, creatorId, playerCount) {
+  const components = [
+    {
+      type: MessageComponentTypes.TEXT_DISPLAY,
+      content: `## New game created by <@${creatorId}>\n\nSit tight for now, once ${playerCount} players are here, we'll vote on the settings to play.\n\nIf you need to leave the game, click the button below.`,
+    },
+    {
+      type: MessageComponentTypes.ACTION_ROW,
+      components: [
+        {
+          type: MessageComponentTypes.BUTTON,
+          custom_id: `leave_game_${gameThreadId}`,
+          label: 'Leave Game',
+          style: ButtonStyleTypes.PRIMARY,
+        },
+      ],
+    },
+  ]
+  await SendMessageWithComponents(gameThreadId, components)
+}
+
 async function fetchSettingsOptions(playerCount) {
   // Fetch the settings poll options from the Friends of Risk API
   const response = await FriendsOfRiskRequest(`getsettings`, {
@@ -184,8 +201,6 @@ async function fetchSettingsOptions(playerCount) {
   }
 
   const data = await response.json()
-
-  console.log(`Fetch settings data: ${JSON.stringify(data)}`)
 
   return data.settings
 }

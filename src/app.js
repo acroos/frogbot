@@ -13,6 +13,7 @@ import {
   ReadPlayerIdFromContext,
 } from './utils/discord.js'
 import JoinGame, { JoinGameError } from './commands/join-game.js'
+import LeaveGame, { LeaveGameError } from './commands/leave-game.js'
 import SettingsPollSelectionMade from './commands/settings-poll-selection.js'
 import GenericErrorHandler from './utils/error-handler.js'
 import WinnerSelection from './commands/winner-selection.js'
@@ -65,8 +66,8 @@ async function handleJoinGameButton(req, res, customId) {
   const gameId = customId.split('_')[2]
 
   // Call the JoinGame function with playerId and game
-  try {
-    return JoinGame(playerId, gameId).then(() =>
+  return JoinGame(playerId, gameId)
+    .then(() =>
       res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
@@ -75,21 +76,52 @@ async function handleJoinGameButton(req, res, customId) {
         },
       })
     )
-  } catch (error) {
-    if (error instanceof JoinGameError) {
-      console.error(`JoinGameError: ${error.message}`)
+    .catch((error) => {
+      if (error instanceof JoinGameError) {
+        console.error(`JoinGameError: ${error.message}`)
 
-      return res.send({
+        return res.send({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            flags: InteractionResponseFlags.EPHEMERAL,
+            content: error.message,
+          },
+        })
+      } else {
+        throw error // Re-throw unexpected errors
+      }
+    })
+}
+
+async function handleLeaveGameButton(req, res, customId) {
+  const playerId = ReadPlayerIdFromContext(req.body)
+  const gameId = customId.split('_')[2]
+
+  return LeaveGame(playerId, gameId)
+    .then(() => {
+      res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
           flags: InteractionResponseFlags.EPHEMERAL,
-          content: error.message,
+          content: `You have left the game: ${gameId}.`,
         },
       })
-    } else {
-      throw error // Re-throw unexpected errors
-    }
-  }
+    })
+    .catch((error) => {
+      if (error instanceof LeaveGameError) {
+        console.error(`LeaveGameError: ${error.message}`)
+
+        return res.send({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            flags: InteractionResponseFlags.EPHEMERAL,
+            content: error.message,
+          },
+        })
+      } else {
+        throw error // Re-throw unexpected errors
+      }
+    })
 }
 
 async function handleSettingsPollSelection(req, res, customId) {
@@ -138,81 +170,87 @@ async function handleWinnerPollSelection(req, res, customId) {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         flags: InteractionResponseFlags.EPHEMERAL,
-        content: `Your selection of <@${winnerId}> as winner has been counted`
-      }
+        content: `Your selection of <@${winnerId}> as winner has been counted`,
+      },
     })
   } else {
     return res.send({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         flags: InteractionResponseFlags.EPHEMERAL,
-        content: `Your selection of <@${winnerId}> as winner could not be counted.  Please try again.`
-      }
+        content: `Your selection of <@${winnerId}> as winner could not be counted.  Please try again.`,
+      },
     })
   }
 }
 
 export default async function CreateApp() {
+  console.log(`Config: ${JSON.stringify(CONFIG)}`)
   // Create an express app
   const app = express()
 
   app.use(GenericErrorHandler) // Use the generic error handler
   app.use(express.json()) // Parse JSON bodies
-  app.use(verifyKeyMiddleware(CONFIG.publicKey)) // Verify Discord requests
+
+  app.get('/health', function (_req, res) {
+    res.send('ok')
+  })
 
   /**
    * Interactions endpoint URL where Discord will send HTTP requests
    * Parse request body and verifies incoming requests using discord-interactions package
    */
-  app.post('/interactions', async function (req, res) {
-    // Interaction id, type and data
-    const { id, type, data } = req.body
+  app.post(
+    '/interactions',
+    verifyKeyMiddleware(CONFIG.publicKey),
+    async function (req, res) {
+      // Interaction id, type and data
+      const { id, type, data } = req.body
 
-    /**
-     * Handle verification requests
-     */
-    if (type === InteractionType.PING) {
-      return res.send({ type: InteractionResponseType.PONG })
-    }
-
-    /**
-     * Handle slash command requests
-     * See https://discord.com/developers/docs/interactions/application-commands#slash-commands
-     */
-    if (type === InteractionType.APPLICATION_COMMAND) {
-      const { name } = data
-
-      if (name == 'create_game' && id) {
-        return await handleCreateGameCommand(req, res)
+      /**
+       * Handle verification requests
+       */
+      if (type === InteractionType.PING) {
+        return res.send({ type: InteractionResponseType.PONG })
       }
 
-      console.error(`unknown command: ${name}`)
-      return res.status(400).json({ error: 'unknown command' })
-    }
+      /**
+       * Handle slash command requests
+       * See https://discord.com/developers/docs/interactions/application-commands#slash-commands
+       */
+      if (type === InteractionType.APPLICATION_COMMAND) {
+        const { name } = data
 
-    /**
-     * Handle component interactions (buttons, select menus, etc.)
-     * See https://discord.com/developers/docs/interactions/message-components
-     */
-    if (type == InteractionType.MESSAGE_COMPONENT) {
-      const { custom_id } = data
-      console.log(`Custom ID: ${custom_id}`)
+        if (name == 'create_game' && id) {
+          return await handleCreateGameCommand(req, res)
+        }
 
-      if (custom_id.startsWith('join_game_')) {
-        return await handleJoinGameButton(req, res, custom_id)
-      } else if (custom_id.startsWith('settings_poll_')) {
-        return await handleSettingsPollSelection(req, res, custom_id)
-      } else if (custom_id.startsWith('winner_selection_')) {
-        return await handleWinnerPollSelection(req, res, custom_id)
+        console.error(`unknown command: ${name}`)
+        return res.status(400).json({ error: 'unknown command' })
       }
 
-      console.error(`unknown component interaction: ${custom_id}`)
-      return res.status(400).json({ error: 'unknown component interaction' })
-    }
+      /**
+       * Handle component interactions (buttons, select menus, etc.)
+       * See https://discord.com/developers/docs/interactions/message-components
+       */
+      if (type == InteractionType.MESSAGE_COMPONENT) {
+        const { custom_id } = data
+        if (custom_id.startsWith('join_game_')) {
+          return await handleJoinGameButton(req, res, custom_id)
+        } else if (custom_id.startsWith('settings_poll_')) {
+          return await handleSettingsPollSelection(req, res, custom_id)
+        } else if (custom_id.startsWith('winner_selection_')) {
+          return await handleWinnerPollSelection(req, res, custom_id)
+        }
 
-    console.error('unknown interaction type', type)
-    return res.status(400).json({ error: 'unknown interaction type' })
-  })
+        console.error(`unknown component interaction: ${custom_id}`)
+        return res.status(400).json({ error: 'unknown component interaction' })
+      }
+
+      console.error('unknown interaction type', type)
+      return res.status(400).json({ error: 'unknown interaction type' })
+    }
+  )
 
   return app
 }

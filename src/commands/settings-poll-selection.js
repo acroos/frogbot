@@ -1,9 +1,11 @@
 import {
-  InteractionResponseFlags,
   MessageComponentTypes,
 } from 'discord-interactions'
 import { GetGame, SetGame } from '../utils/redis.js'
-import { SendMessageWithComponents } from '../utils/discord.js'
+import {
+  SendMessageWithComponents,
+  SendMessageWithContent,
+} from '../utils/discord.js'
 import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
 
 class SettingsAlreadyFinalizedError extends Error {
@@ -31,9 +33,13 @@ export default async function SettingsPollSelectionMade(
   await addSettingsVoteToGame(gameId, playerId, selectionId).then(async () => {
     const game = await maybeFinalizeVote(gameId)
     if (game) {
-      const finalizedSettings = game.settingsOptions.find((option) => option.settingid === game.selectedSettingId)
+      const finalizedSettings = game.settingsOptions.find(
+        (option) => option.settingid === game.selectedSettingId
+      )
       console.log(`Finalized settings: ${JSON.stringify(finalizedSettings)}`)
       await sendStartGameMessage(gameId, finalizedSettings)
+    } else {
+      await pingRemainingVotes(gameId)
     }
   })
 
@@ -59,10 +65,8 @@ async function addSettingsVoteToGame(gameId, playerId, selectedSettingId) {
 
 async function maybeFinalizeVote(gameId) {
   let game = await GetGame(gameId)
-  console.log(`Game: ${JSON.stringify(game)}`)
   const votes = Object.values(game.settingsVotes)
   if (votes.length === game.playerCount) {
-    console.log(`Voting completed; Votes: ${JSON.stringify(votes)}`)
     const selectedSettings = votes[Math.floor(Math.random() * votes.length)]
     game.selectedSettingId = selectedSettings.settingid
     return SetGame(gameId, game)
@@ -70,15 +74,27 @@ async function maybeFinalizeVote(gameId) {
   return null
 }
 
+async function pingRemainingVotes(gameId) {
+  const game = await GetGame(gameId)
+  const remainingVoters = game.players - Object.keys(game.settingsVotes)
+
+  await SendMessageWithContent(
+    gameId,
+    `${remainingVoters.map((voterId) => `<@${voterId}> `)}\nDon't forget to vote for your prferred settings with the selection menu above!`
+  )
+}
+
 async function sendStartGameMessage(gameId, selectedSettings) {
   const game = await GetGame(gameId)
   console.log(`Game right before starting: ${JSON.stringify(game)}`)
-  const players = await Promise.all(game.players.map((playerId) => FetchPlayerInfo(playerId)));
+  const players = await Promise.all(
+    game.players.map((playerId) => FetchPlayerInfo(playerId))
+  )
 
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
-      content: `Settings have been finalized for the game!`,
+      content: `${game.players.map((playerId) => `<@${playerId}>`)}\nSettings have been finalized for the game!`,
     },
     {
       type: MessageComponentTypes.MEDIA_GALLERY,
@@ -103,10 +119,10 @@ async function sendStartGameMessage(gameId, selectedSettings) {
         {
           type: MessageComponentTypes.STRING_SELECT,
           custom_id: `winner_selection_${gameId}`,
-          options: players.map(player => ({
+          options: players.map((player) => ({
             label: player.name,
-            value: player.discordid
-          }))
+            value: player.discordid,
+          })),
         },
       ],
     },

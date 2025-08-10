@@ -9,6 +9,8 @@ const CONFIG = {
   loungeRoleId: process.env.LOUNGE_ROLE_ID || '1401448826375508009', // Discord Role ID for the Risk Competitive Lounge
   friendsOfRiskApiBaseUrl: process.env.FRIENDS_OF_RISK_API_BASE_URL || 'https://friendsofrisk.com/api', // Base URL for Friends of Risk API
   friendsOfRiskApiKey: process.env.FRIENDS_OF_RISK_API_KEY || 'your-friends-of-risk-api-key', // API key for Friends of Risk
+  redisHost: process.env.REDIS_HOST || 'redis',
+  redisUseTLS: process.env.REDIS_USE_TLS || false
 }
 
 export default CONFIG

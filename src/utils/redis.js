@@ -1,6 +1,13 @@
 import { createClient } from 'redis'
+import CONFIG from '../config.js'
 
-const redisClient = await createClient()
+const redisClient = await createClient({
+  socket: {
+    host: CONFIG.redisHost,
+    tls: true,
+    rejectUnauthorized: false,
+  },
+})
   .on('error', (err) => console.log('Redis Client Error', err))
   .connect()
 
@@ -23,10 +30,11 @@ export async function SetGame(gameId, game) {
     await redisClient.set(gameIdToRedisKey(gameId), JSON.stringify(game))
   } catch (error) {
     console.error('Error setting value in Redis:', error)
+    return null
   }
   return game
 }
 
 function gameIdToRedisKey(gameId) {
-  return `game-${gameId}`;
+  return `game-${gameId}`
 }

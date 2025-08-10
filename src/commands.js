@@ -13,8 +13,6 @@ const CREATE_GAME_COMMAND = {
       description: 'Number of players in the game',
       required: true,
       choices: [
-        { name: '2 Players', value: 2 },
-        { name: '3 Players', value: 3 },
         { name: '4 Players', value: 4 },
         { name: '5 Players', value: 5 },
         { name: '6 Players', value: 6 },
