@@ -241,7 +241,7 @@ export default async function CreateApp() {
           return await handleSettingsPollSelection(req, res, custom_id)
         } else if (custom_id.startsWith('winner_selection_')) {
           return await handleWinnerPollSelection(req, res, custom_id)
-        } else if (custom_id.starts_with('leave_game_')) {
+        } else if (custom_id.startsWith('leave_game_')) {
           return await handleLeaveGameButton(req, res, custom_id)
         }
 
