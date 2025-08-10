@@ -1,10 +1,10 @@
-import { RemovePlayerFromThread } from "../utils/discord.js";
-import { GetGame, RemovePlayerInGame, SetGame } from "../utils/redis.js"
+import { RemovePlayerFromThread } from '../utils/discord.js'
+import { GetGame, RemovePlayerInGame, SetGame } from '../utils/redis.js'
 
 export class LeaveGameError extends Error {
   constructor(message, options) {
-    super(message, options);
-    this.name = 'LeaveGameError';
+    super(message, options)
+    this.name = 'LeaveGameError'
   }
 }
 
@@ -28,10 +28,10 @@ export default async function LeaveGame(playerId, gameId) {
     throw new LeaveGameError('Could not leave game')
   }
 
-  const results = await Promise.all(
+  const results = await Promise.all([
     RemovePlayerInGame(playerId),
-    RemovePlayerFromThread(gameId, playerId)
-  )
+    RemovePlayerFromThread(gameId, playerId),
+  ])
 
   return results
 }
