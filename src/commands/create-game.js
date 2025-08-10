@@ -168,7 +168,7 @@ async function sendPingMessageInChannel(
       ],
     },
   ]
-  await SendMessageWithComponents(CONFIG.loungeChannelId, components)
+  return await SendMessageWithComponents(CONFIG.loungeChannelId, components)
 }
 
 async function sendInitialMessage(gameId, creatorId, playerCount) {
