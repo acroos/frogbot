@@ -41,7 +41,6 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
 
       await Promise.all(
         SendMessageWithContent(gameId, `Congratulations to the winner <@${winner}>!  The game has been stored on FriendsOfRisk, you should see the results live shortly.`),
-        LockThread(gameId),
         RemoveAllPlayersInGame(gameId)
       )
     }

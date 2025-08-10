@@ -30,8 +30,12 @@ export function FinalizeGames() {
     })
 }
 
-export async function CleanUpFinalizedGames() {
+export function CleanUpFinalizedGames() {
   GetFinalizedGames().then((gameIds) => {
+    if (!gameIds) {
+      return;
+    }
+
     for (let gameId of gameIds) {
       CloseThread(gameId)
         .then(async () => {
