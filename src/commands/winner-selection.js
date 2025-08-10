@@ -14,7 +14,9 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
   }
   let game = await GetGame(gameId)
 
-  if (game.winner !== undefined) {
+  console.log(`Game before winner selection: ${JSON.stringify(game)}`)
+
+  if (game.winner) {
     return false
   }
   
