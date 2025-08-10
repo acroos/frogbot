@@ -186,7 +186,7 @@ async function handleWinnerPollSelection(req, res, customId) {
 }
 
 export default async function CreateApp() {
-  cron.schedule('* * * * *', async () => {
+  cron.schedule('* */5 * * *', async () => {
     await LockThreads()
   });
 
