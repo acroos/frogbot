@@ -1,7 +1,8 @@
 import { MessageComponentTypes } from 'discord-interactions'
-import { AddPlayerToThread, SendMessageWithComponents, SendMessageWithContent, UpdateMessageWithContent } from '../utils/discord.js'
+import { AddPlayerToThread, SendMessageWithComponents, SendMessageWithContent, UpdateMessageWithComponents, UpdateMessageWithContent } from '../utils/discord.js'
 import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
 import { GetGame, SetGame } from '../utils/redis.js'
+import CONFIG from '../config.js';
 
 export class JoinGameError extends Error {
   constructor(message, options) {
@@ -103,9 +104,14 @@ async function sendLobbyFullMessage(gameId) {
 async function updatePingMessage(gameId) {
   const game = await GetGame(gameId)
 
-  const content = `Risk competitive lounge game ${gameId} (started by <@${game.creatorId}>) started.\n\nKeep an eye out for the next one!`
+  const components = [
+    {
+      type: MessageComponentTypes.TEXT_DISPLAY,
+      content: `Risk Competitive Lounge game created by <@${game.creatorId}>!\n- Player Count: ${game.playerCount}\n- ELO Requirement: ${game.eloRequirement}\n- Voice Chat: ${game.voiceChat ? 'Enabled' : 'Disabled'}\n\nGame has filled, keep an eye out for the next one or start your own with the \`/create_game\` command`,
+    }
+  ]
 
-  await UpdateMessageWithContent(gameId, game.pingMessageId, content)
+  await UpdateMessageWithComponents(CONFIG.loungeChannelId, game.pingMessageId, components)
 }
 
 async function sendWelcomeMessage(gameId, playerId) {

@@ -1,3 +1,4 @@
+import { RemovePlayerFromThread } from "../utils/discord.js";
 import { GetGame, SetGame } from "../utils/redis.js"
 
 export class LeaveGameError extends Error {
@@ -26,4 +27,6 @@ export default async function LeaveGame(playerId, gameId) {
   if (!game) {
     throw new LeaveGameError('Could not leave game')
   }
+
+  return await RemovePlayerFromThread(gameId, playerId)
 }

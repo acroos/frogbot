@@ -69,11 +69,12 @@ export async function SendMessageWithComponents(channelId, components) {
   return json
 }
 
-export async function UpdateMessageWithContent(channelId, messageId, content) {
+export async function UpdateMessageWithComponents(channelId, messageId, components) {
+  
   const result = await DiscordRequest(`channels/${channelId}/messages/${messageId}`, {
       method: 'PATCH',
       body: {
-        content: content
+        components: components
       }
     }
   )
@@ -93,6 +94,32 @@ export async function AddPlayerToThread(threadId, playerId) {
   })
   if (!result.ok) {
     throw new Error(`Failed to add player to thread: ${result.statusText}`)
+  }
+
+  return result
+}
+
+export async function RemovePlayerFromThread(threadId, playerId) {
+  const result = await DiscordRequest(`channels/${threadId}/thread-members/${playerId}`, {
+    method: 'DELETE',
+  })
+  if (!result.ok) {
+    throw new Error(`Failed to remove player from thread: ${result.statusText}`)
+  }
+
+  return result
+}
+
+export async function LockThread(threadId) {
+  const result = await DiscordRequest(`channels/${threadId}`, {
+    method: 'PATCH',
+    body: {
+      locked: true
+    }
+  })
+
+    if (!result.ok) {
+    throw new Error(`Failed to lock thread: ${result.statusText}`)
   }
 
   return result

@@ -35,6 +35,14 @@ export async function SetGame(gameId, game) {
   return game
 }
 
+export async function RemoveGame(gameId) {
+  try {
+    await redisClient.del(gameIdToRedisKey(gameId))
+  } catch (error) {
+    console.error('Error removing game', error)
+  }
+}
+
 function gameIdToRedisKey(gameId) {
   return `game-${gameId}`
 }
