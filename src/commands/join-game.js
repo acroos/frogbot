@@ -1,5 +1,5 @@
 import { MessageComponentTypes } from 'discord-interactions'
-import { AddPlayerToThread, SendMessageWithComponents, SendMessageWithContent, UpdateMessageWithComponents, UpdateMessageWithContent } from '../utils/discord.js'
+import { AddPlayerToThread, SendMessageWithComponents, SendMessageWithContent, UpdateMessageWithComponents } from '../utils/discord.js'
 import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
 import { GetGame, SetGame } from '../utils/redis.js'
 import CONFIG from '../config.js';
