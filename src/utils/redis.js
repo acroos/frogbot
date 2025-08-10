@@ -2,6 +2,8 @@ import { createClient } from 'redis'
 import CONFIG from '../config.js'
 import { LockThread } from './discord.js'
 
+const FINALIZED_GAMES_KEY = 'finalized-games'
+
 const redisClient = await createClient({
   socket: {
     host: CONFIG.redisHost,
@@ -41,6 +43,30 @@ export async function RemoveGame(gameId) {
     await redisClient.del(gameIdToRedisKey(gameId))
   } catch (error) {
     console.error('Error removing game', error)
+  }
+}
+
+export async function GetFinalizedGames() {
+  const value = await redisClient.get(FINALIZED_GAMES_KEY)
+  return JSON.parse(value)
+}
+
+export async function SetFinalizedGames(gameIds) {
+  try {
+    await redisClient.set(FINALIZED_GAMES_KEY, gameIds)
+  } catch (error) {
+    console.error('Error setting finalized games', error)
+  }
+}
+
+export async function ScanMap(mapFunc) {
+  for await (const keys of redisClient.scanIterator()) {
+    for(const key of keys) {
+      const value = await redisClient.get(key)
+      const parsed = JSON.parse(value)
+
+      mapFunc(parsed)
+    }
   }
 }
 

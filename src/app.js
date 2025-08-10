@@ -186,9 +186,7 @@ async function handleWinnerPollSelection(req, res, customId) {
 }
 
 export default async function CreateApp() {
-  cron.schedule('* * * * *', async () => {
-    console.log('Locking threads!')
-    await LockThreads()
+  cron.schedule('*/3 * * * *', async () => {
   });
 
   // Create an express app

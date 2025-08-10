@@ -38,6 +38,7 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
         return false
       }
       game.winner = winner
+      game.completedAt = Date.now()
       game = await SetGame(gameId, game)
 
       await SendMessageWithContent(gameId, `Congratulations to the winner <@${winner}>!  The game has been stored on FriendsOfRisk, you should see the results live shortly.`)

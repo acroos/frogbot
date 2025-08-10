@@ -126,6 +126,17 @@ export async function LockThread(threadId) {
   return result
 }
 
+export async function CloseThread(threadId) {
+    const result = await DiscordRequest(`channels/${threadId}`, {
+    method: 'DELETE',
+  })
+
+    if (!result.ok) {
+    throw new Error(`Failed to close thread: ${result.statusText}`)
+  }
+
+  return result
+}
 
 /* Discord helpers */
 export function ReadDiscordCommandOptionFromData(data, name, defaultValue = null) {
