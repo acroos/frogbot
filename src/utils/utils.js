@@ -12,6 +12,7 @@ import {
   SetFinalizedGames,
   SetGame,
   GetGame,
+  RemoveAllPlayersInGame,
 } from './redis.js'
 
 const THREAD_OPEN_TIME = 180000 // 3 minutes in ms
@@ -66,6 +67,7 @@ export function CleanUpOldGames() {
       CloseThread(game.gameThreadId)
         .then(async () => {
           await RemoveGame(game.gameThreadId)
+          await RemoveAllPlayersInGame(game.gameThreadId)
         })
         .catch((error) => {
           console.error('Error cleaning up finalized games: ', error)
