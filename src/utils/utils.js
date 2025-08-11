@@ -45,6 +45,7 @@ export function CleanUpFinalizedGames() {
   console.log(`Starting finalized game cleanup at ${new Date().toUTCString()}`)
   GetFinalizedGames()
     .then((gameIds) => {
+      console.log(`Finalized games: ${JSON.stringify(gameIds)}`)
       if (!gameIds) {
         return
       }
@@ -52,6 +53,7 @@ export function CleanUpFinalizedGames() {
       for (let gameId of gameIds) {
         CloseThread(gameId)
           .then(async () => {
+            console.log(`Closed thread: ${gameId}`)
             await RemoveGame(gameId)
           })
           .catch((error) => {
@@ -71,6 +73,7 @@ export function CleanUpOldGames() {
   console.log(`Starting old game cleanup at ${new Date().toUTCString()}`)
 
   MapToAllGames(async (game) => {
+    console.log(`Time since created: ${startTime - game.createdAt}`)
     if (startTime - game.createdAt > OLD_GAME_THRESHOLD) {
       CloseThread(game.gameThreadId)
         .then(async () => {
