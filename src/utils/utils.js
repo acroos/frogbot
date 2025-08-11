@@ -42,25 +42,33 @@ export function FinalizeGames() {
 }
 
 export function CleanUpFinalizedGames() {
-  GetFinalizedGames().then((gameIds) => {
-    if (!gameIds) {
-      return
-    }
+  console.log(`Starting finalized game cleanup at ${new Date().toUTCString()}`)
+  GetFinalizedGames()
+    .then((gameIds) => {
+      if (!gameIds) {
+        return
+      }
 
-    for (let gameId of gameIds) {
-      CloseThread(gameId)
-        .then(async () => {
-          await RemoveGame(gameId)
-        })
-        .catch((error) => {
-          console.error('Error cleaning up finalized games: ', error)
-        })
-    }
-  })
+      for (let gameId of gameIds) {
+        CloseThread(gameId)
+          .then(async () => {
+            await RemoveGame(gameId)
+          })
+          .catch((error) => {
+            console.error('Error cleaning up finalized games: ', error)
+          })
+      }
+    })
+    .then(() =>
+      console.log(
+        `Finished finalized game cleanup at ${new Date().toUTCString()}`
+      )
+    )
 }
 
 export function CleanUpOldGames() {
   const startTime = Date.now()
+  console.log(`Starting old game cleanup at ${new Date().toUTCString()}`)
 
   MapToAllGames(async (game) => {
     if (startTime - game.createdAt > OLD_GAME_THRESHOLD) {
@@ -73,7 +81,9 @@ export function CleanUpOldGames() {
           console.error('Error cleaning up finalized games: ', error)
         })
     }
-  })
+  }).then(() =>
+    console.log(`Finished old game cleanup at ${new Date().toUTCString()}`)
+  )
 }
 
 export function CloseSettingsSelection() {
