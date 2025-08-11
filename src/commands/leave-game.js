@@ -1,5 +1,7 @@
-import { RemovePlayerFromThread } from '../utils/discord.js'
+import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
+import { RemovePlayerFromThread, SendMessageWithComponents } from '../utils/discord.js'
 import { GetGame, RemovePlayerInGame, SetGame } from '../utils/redis.js'
+import CONFIG from '../config.js'
 
 export class LeaveGameError extends Error {
   constructor(message, options) {
@@ -18,6 +20,10 @@ export default async function LeaveGame(playerId, gameId) {
     throw new LeaveGameError(`Could not find game with ID ${gameId}`)
   }
 
+  if (game.selectedSettingId) {
+    throw new LeaveGameError('Cannot leave a game after it has started')
+  }
+
   game.players = game.players.filter((player) => player !== playerId)
   delete game.settingsVotes[playerId]
 
@@ -30,7 +36,32 @@ export default async function LeaveGame(playerId, gameId) {
   const results = await Promise.all([
     RemovePlayerInGame(playerId),
     RemovePlayerFromThread(gameId, playerId),
+    updateGamePingMessage(gameId)
   ])
 
   return results
+}
+
+async function updateGamePingMessage(gameId) {
+  const game = await GetGame(gameId)
+  const { gameThreadId, creatorId, playerCount, eloRequirement, voiceChat } = game
+
+  const components = [
+    {
+      type: MessageComponentTypes.TEXT_DISPLAY,
+      content: `Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n- Voice Chat: ${voiceChat ? 'Enabled' : 'Disabled'}\n\nUse the button below to join the game!`,
+    },
+    {
+      type: MessageComponentTypes.ACTION_ROW,
+      components: [
+        {
+          type: MessageComponentTypes.BUTTON,
+          custom_id: `join_game_${gameThreadId}`,
+          label: 'Join Game',
+          style: ButtonStyleTypes.PRIMARY,
+        },
+      ],
+    },
+  ]
+  return await SendMessageWithComponents(CONFIG.loungeChannelId, components)
 }
