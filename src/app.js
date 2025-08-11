@@ -186,12 +186,18 @@ async function handleWinnerPollSelection(req, res, customId) {
 }
 
 export default async function CreateApp() {
-  cron.schedule('*/20 * * * *', async () => {
+  cron.schedule('*/2 * * * *', () => {
     FinalizeGames()
-    CleanUpFinalizedGames()
     CloseSettingsSelection()
-    CleanUpOldGames()
   });
+
+  cron.schedule('*/10 * * * *', () => {
+    CleanUpFinalizedGames()
+  })
+
+  cron.schedule('0 * * * *', () => {
+    CleanUpOldGames()
+  })
 
   // Create an express app
   const app = express()
