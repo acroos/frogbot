@@ -92,23 +92,6 @@ export async function ScanMap(mapFunc) {
   }
 }
 
-export async function LockThreads() {
-  for await (const keys of redisClient.scanIterator()) {
-    for(const key of keys) {
-      const value = await redisClient.get(key)
-
-      const game = JSON.parse(value)
-      if (game.winner) {
-        console.log(`Found finished game: ${game.gameThreadId}`)
-        const response = await LockThread(game.gameThreadId)
-        if (!response.ok) {
-          console.log(`Could not lock game: ${game.gameThreadId}`)
-        }
-      }
-    }
-  }
-}
-
 function gameIdToRedisKey(gameId) {
   return `game-${gameId}`
 }

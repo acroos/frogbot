@@ -12,7 +12,6 @@ export class JoinGameError extends Error {
 }
 
 // TODO:
-// - Add player to "currently playing"
 // - Add a tiner for selecting settings
 export default async function JoinGame(playerId, gameId) {
   // Fetch the game from Redis

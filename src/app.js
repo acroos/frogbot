@@ -17,7 +17,6 @@ import LeaveGame, { LeaveGameError } from './commands/leave-game.js'
 import SettingsPollSelectionMade from './commands/settings-poll-selection.js'
 import GenericErrorHandler from './utils/error-handler.js'
 import WinnerSelection from './commands/winner-selection.js'
-import { LockThreads } from './utils/redis.js';
 import { CleanUpFinalizedGames, FinalizeGames } from './utils/utils.js';
 
 async function handleCreateGameCommand(req, res) {
@@ -187,7 +186,7 @@ async function handleWinnerPollSelection(req, res, customId) {
 }
 
 export default async function CreateApp() {
-  cron.schedule('*/3 * * * *', async () => {
+  cron.schedule('*/20 * * * *', async () => {
     FinalizeGames()
     CleanUpFinalizedGames()
   });
