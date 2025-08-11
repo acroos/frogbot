@@ -58,7 +58,6 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
         return false
       }
       game.winner = winner
-      game.completedAt = Date.now()
       game = await SetGame(gameId, game)
 
       await Promise.all([

@@ -111,19 +111,17 @@ async function sendStartGameMessage(gameId, selectedSettings) {
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
       content:
-        'When the game is complete, please select a winner from the selection below',
+        'When the game is complete, please click the button below',
     },
     {
       type: MessageComponentTypes.ACTION_ROW,
       placeholder: 'Select a winner',
       components: [
         {
-          type: MessageComponentTypes.STRING_SELECT,
-          custom_id: `winner_selection_${gameId}`,
-          options: players.map((player) => ({
-            label: player.name,
-            value: player.discordid,
-          })),
+          type: MessageComponentTypes.BUTTON,
+          custom_id: `finish_game_${gameId}`,
+          label: 'Finish Game',
+          style: ButtonStyleTypes.PRIMARY,
         },
       ],
     },

@@ -5,7 +5,7 @@ import {
   InteractionType,
   verifyKeyMiddleware,
 } from 'discord-interactions'
-import cron from 'node-cron';
+import cron from 'node-cron'
 import CONFIG from './config.js'
 import CreateGame, { CreateGameError } from './commands/create-game.js'
 import {
@@ -17,7 +17,13 @@ import LeaveGame, { LeaveGameError } from './commands/leave-game.js'
 import SettingsPollSelectionMade from './commands/settings-poll-selection.js'
 import GenericErrorHandler from './utils/error-handler.js'
 import WinnerSelection from './commands/winner-selection.js'
-import { CleanUpFinalizedGames, CleanUpOldGames, CloseSettingsSelection, FinalizeGames } from './utils/utils.js';
+import {
+  CleanUpFinalizedGames,
+  CleanUpOldGames,
+  CloseSettingsSelection,
+  FinalizeGames,
+} from './utils/utils.js'
+import FinishGame from './commands/finish-game.js'
 
 async function handleCreateGameCommand(req, res) {
   const { data } = req.body
@@ -185,19 +191,45 @@ async function handleWinnerPollSelection(req, res, customId) {
   }
 }
 
+async function handleFinishGameButton(req, res, customId) {
+  // Extract game ID from custom_id
+  const gameId = customId.split('_')[2]
+
+  return FinishGame(gameId).then((result) => {
+    if (result) {
+      res.send({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          flags: InteractionResponseFlags.EPHEMERAL,
+          content: `Game <#${gameId}> has been finished`,
+        },
+      })
+    } else {
+      res.send({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          flags: InteractionResponseFlags.EPHEMERAL,
+          content: `Game <#${gameId}> is already finished`,
+        },
+      })
+    }
+  })
+}
+
 export default async function CreateApp() {
   cron.schedule('*/2 * * * *', () => {
     FinalizeGames()
     CloseSettingsSelection()
-  });
+  })
 
   cron.schedule('*/10 * * * *', () => {
     CleanUpFinalizedGames()
-  })
-
-  cron.schedule('0 * * * *', () => {
     CleanUpOldGames()
   })
+
+  // cron.schedule('0 * * * *', () => {
+  //   CleanUpOldGames()
+  // })
 
   // Create an express app
   const app = express()
@@ -256,6 +288,8 @@ export default async function CreateApp() {
           return await handleWinnerPollSelection(req, res, custom_id)
         } else if (custom_id.startsWith('leave_game_')) {
           return await handleLeaveGameButton(req, res, custom_id)
+        } else if (custom_id.startsWith('finish_game_')) {
+          return await FinishGame
         }
 
         console.error(`unknown component interaction: ${custom_id}`)
