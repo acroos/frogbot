@@ -1,18 +1,28 @@
-import { CloseThread, LockThread } from './discord.js'
+import { MessageComponentTypes } from 'discord-interactions'
+import {
+  CloseThread,
+  LockThread,
+  SendMessageWithComponents,
+} from './discord.js'
+import { FetchPlayerInfo } from './friends-of-risk.js'
 import {
   GetFinalizedGames,
   RemoveGame,
-  ScanMap,
+  MapToAllGames,
   SetFinalizedGames,
+  SetGame,
+  GetGame,
 } from './redis.js'
 
 const THREAD_OPEN_TIME = 180000 // 3 minutes in ms
+const SETTINGS_SELECTION_TIME = 300000 // 5 minutes in ms
+const OLD_GAME_THRESHOLD = 14400000 // 4 hours in ms
 
 export function FinalizeGames() {
   const startTime = Date.now()
 
   const finalizedGames = []
-  ScanMap(async (game) => {
+  MapToAllGames(async (game) => {
     if (gameShouldFinalize(startTime, game.completedAt)) {
       const response = await LockThread(game.gameThreadId)
       if (!response.ok) {
@@ -33,7 +43,7 @@ export function FinalizeGames() {
 export function CleanUpFinalizedGames() {
   GetFinalizedGames().then((gameIds) => {
     if (!gameIds) {
-      return;
+      return
     }
 
     for (let gameId of gameIds) {
@@ -48,10 +58,93 @@ export function CleanUpFinalizedGames() {
   })
 }
 
+export function CleanUpOldGames() {
+  const startTime = Date.now()
+
+  MapToAllGames(async (game) => {
+    if (startTime - game.createdAt > OLD_GAME_THRESHOLD) {
+      CloseThread(game.gameThreadId)
+        .then(async () => {
+          await RemoveGame(game.gameThreadId)
+        })
+        .catch((error) => {
+          console.error('Error cleaning up finalized games: ', error)
+        })
+    }
+  })
+}
+
+export function CloseSettingsSelection() {
+  const startTime = Date.now()
+  MapToAllGames(async (game) => {
+    if (game.filledAt && startTime - game.filledAt > SETTINGS_SELECTION_TIME) {
+      const votes = Object.values(game.settingsVotes)
+      const selectedSettings =
+        votes.length > 0
+          ? votes[Math.floor(Math.random() * votes.length)]
+          : game.settingsOptions[
+              Math.floor(Math.random() * game.settingsOptions.length)
+            ]
+
+      game.selectedSettingId = selectedSettings.settingid
+      return await Promise.all([
+        sendStartGameMessage(game, selectedSettings),
+        SetGame(gameId, game),
+      ])
+    }
+  })
+}
+
 function gameShouldFinalize(startTime, completionTime) {
   if (!completionTime) {
     return false
   }
 
   return startTime - completionTime > THREAD_OPEN_TIME
+}
+
+async function sendStartGameMessage(game, selectedSettings) {
+  const gameId = game.gameThreadId
+  const players = await Promise.all(
+    game.players.map((playerId) => FetchPlayerInfo(playerId))
+  )
+
+  const components = [
+    {
+      type: MessageComponentTypes.TEXT_DISPLAY,
+      content: `${game.players.map((playerId) => `<@${playerId}>`)}\nSettings have been finalized for the game!`,
+    },
+    {
+      type: MessageComponentTypes.MEDIA_GALLERY,
+      items: [
+        {
+          media: {
+            url: selectedSettings.link,
+          },
+          description: `${selectedSettings.map} ${selectedSettings.cards} ${selectedSettings.gametype} [#${selectedSettings.settingid}]`,
+        },
+      ],
+    },
+    {
+      type: MessageComponentTypes.TEXT_DISPLAY,
+      content:
+        'When the game is complete, please select a winner from the selection below',
+    },
+    {
+      type: MessageComponentTypes.ACTION_ROW,
+      placeholder: 'Select a winner',
+      components: [
+        {
+          type: MessageComponentTypes.STRING_SELECT,
+          custom_id: `winner_selection_${gameId}`,
+          options: players.map((player) => ({
+            label: player.name,
+            value: player.discordid,
+          })),
+        },
+      ],
+    },
+  ]
+
+  return await SendMessageWithComponents(gameId, components)
 }

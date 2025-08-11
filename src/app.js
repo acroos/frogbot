@@ -17,7 +17,7 @@ import LeaveGame, { LeaveGameError } from './commands/leave-game.js'
 import SettingsPollSelectionMade from './commands/settings-poll-selection.js'
 import GenericErrorHandler from './utils/error-handler.js'
 import WinnerSelection from './commands/winner-selection.js'
-import { CleanUpFinalizedGames, FinalizeGames } from './utils/utils.js';
+import { CleanUpFinalizedGames, CloseSettingsSelection, FinalizeGames } from './utils/utils.js';
 
 async function handleCreateGameCommand(req, res) {
   const { data } = req.body
@@ -189,6 +189,7 @@ export default async function CreateApp() {
   cron.schedule('*/20 * * * *', async () => {
     FinalizeGames()
     CleanUpFinalizedGames()
+    CloseSettingsSelection()
   });
 
   // Create an express app

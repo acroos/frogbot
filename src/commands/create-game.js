@@ -87,7 +87,9 @@ export default async function CreateGame(
     winnerVotes: {},
     pingMessageId: pingMessage.id,
     winner: undefined,
-    completedAt: undefined
+    completedAt: undefined,
+    createdAt: Date.now(),
+    filledAt: undefined,
   }
   
   const savedGame = await SetGame(gameThreadId, newGame)

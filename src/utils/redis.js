@@ -92,6 +92,17 @@ export async function ScanMap(mapFunc) {
   }
 }
 
+export async function MapToAllGames(mapFunc) {
+  for await (const keys of redisClient.scanIterator({MATCH: "game-*"})) {
+    for (const key of keys) {
+      const value = await redisClient.get(key)
+      const parsed = JSON.parse(value)
+
+      mapFunc(parsed)
+    }
+  }
+}
+
 function gameIdToRedisKey(gameId) {
   return `game-${gameId}`
 }

@@ -34,8 +34,11 @@ export default async function JoinGame(playerId, gameId) {
 
   if (game.playerCount === game.players.length) {
     // Send the initial message in the game thread with settings options
-    await sendLobbyFullMessage(gameId)
-    await updatePingMessage(gameId)
+    await Promise.all([
+      sendLobbyFullMessage(gameId),
+      updatePingMessage(gameId),
+      updateGameFilled(gameId)
+    ])
   } else {
     await sendWelcomeMessage(gameId, playerId)
   }
@@ -126,4 +129,10 @@ async function sendWelcomeMessage(gameId, playerId) {
   const message = `Welcome to the game <@${playerId}>!\n\nHang tight for a few minutes while we wait for a full lobby.  We currently have ${currentPlayerCount} players here, we need ${game.playerCount} to start.`
 
   await SendMessageWithContent(gameId, message)
+}
+
+async function updateGameFilled(gameId) {
+  const game = await GetGame(gameId)
+  game.filledAt = Date.now()
+  return await SetGame(gameId, game)
 }
