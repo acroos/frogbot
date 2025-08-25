@@ -55,6 +55,7 @@ export function CleanUpFinalizedGames() {
           .then(async () => {
             console.log(`Closed thread: ${gameId}`)
             await RemoveGame(gameId)
+            await RemoveAllPlayersInGame(gameId)
           })
           .catch((error) => {
             console.error('Error cleaning up finalized games: ', error)
@@ -81,7 +82,7 @@ export function CleanUpOldGames() {
           await RemoveAllPlayersInGame(game.gameThreadId)
         })
         .catch((error) => {
-          console.error('Error cleaning up finalized games: ', error)
+          console.error('Error cleaning up old games: ', error)
         })
     }
   }).then(() =>

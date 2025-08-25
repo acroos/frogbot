@@ -10,6 +10,7 @@ import CONFIG from './config.js'
 import CreateGame, { CreateGameError } from './commands/create-game.js'
 import {
   ReadDiscordCommandOptionFromData,
+  ReadGuildIdFromContext,
   ReadPlayerIdFromContext,
 } from './utils/discord.js'
 import JoinGame, { JoinGameError } from './commands/join-game.js'
@@ -27,6 +28,7 @@ import FinishGame from './commands/finish-game.js'
 
 async function handleCreateGameCommand(req, res) {
   const { data } = req.body
+  const guildId = ReadGuildIdFromContext(req.body)
   const creatorId = ReadPlayerIdFromContext(req.body)
   const playerCount = ReadDiscordCommandOptionFromData(data, 'player_count')
   const eloRequirement = ReadDiscordCommandOptionFromData(
@@ -37,6 +39,7 @@ async function handleCreateGameCommand(req, res) {
 
   try {
     const game = await CreateGame(
+      guildId,
       creatorId,
       playerCount,
       eloRequirement,
@@ -67,13 +70,14 @@ async function handleCreateGameCommand(req, res) {
 }
 
 async function handleJoinGameButton(req, res, customId) {
+  const guildId = ReadGuildIdFromContext(req.body)
   // Extract playerId from context
   const playerId = ReadPlayerIdFromContext(req.body)
   // Extract game ID from custom_id
   const gameId = customId.split('_')[2]
 
   // Call the JoinGame function with playerId and game
-  return JoinGame(playerId, gameId)
+  return JoinGame(guildId, playerId, gameId)
     .then(() =>
       res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -101,10 +105,11 @@ async function handleJoinGameButton(req, res, customId) {
 }
 
 async function handleLeaveGameButton(req, res, customId) {
+  const guildId = ReadGuildIdFromContext(req.body)
   const playerId = ReadPlayerIdFromContext(req.body)
   const gameId = customId.split('_')[2]
 
-  return LeaveGame(playerId, gameId)
+  return LeaveGame(guildId, playerId, gameId)
     .then(() => {
       res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

@@ -36,6 +36,7 @@ const DEFAULT_ELO_REQUIREMENT = 0 // Default ELO requirement
 const DEFAULT_VOICE_CHAT = false // Default voice chat setting
 
 export default async function CreateGame(
+  guildId,
   creatorId,
   playerCount = null,
   eloRequirement = null,
@@ -61,13 +62,13 @@ export default async function CreateGame(
   validateCreatorElo(creatorPlayerInfo, eloRequirement)
 
   // Create the game thread
-  const gameThreadId = await createGameThread(creatorPlayerInfo.name, playerCount, eloRequirement, voiceChat)
+  const gameThreadId = await createGameThread(guildId, creatorPlayerInfo.name, playerCount, eloRequirement, voiceChat)
 
   const promiseResults = await Promise.all([
     fetchSettingsOptions(playerCount), // Fetch the settings players can vote on
     sendInitialMessage(gameThreadId, creatorId, playerCount), // Send the initial message in the thread
     AddPlayerToThread(gameThreadId, creatorId), // Add the creator to the game thread
-    sendPingMessageInChannel(gameThreadId, creatorId, playerCount, eloRequirement, voiceChat), // Send a ping message in the lounge channel to notify players
+    sendPingMessageInChannel(guildId, gameThreadId, creatorId, playerCount, eloRequirement, voiceChat), // Send a ping message in the lounge channel to notify players
     SetPlayerInGame(creatorId, gameThreadId)
   ])
 
@@ -126,6 +127,7 @@ function validateCreatorElo(creatorData, requiredElo) {
 }
 
 async function createGameThread(
+  guildId,
   creatorName,
   playerCount,
   eloRequirement,
@@ -133,7 +135,7 @@ async function createGameThread(
 ) {
   // /channels/{channel.id}/threads
   const result = await DiscordRequest(
-    `channels/${CONFIG.loungeChannelId}/threads`,
+    `channels/${CONFIG.loungeChannelId[guildId]}/threads`,
     {
       method: 'POST',
       body: {
@@ -153,6 +155,7 @@ async function createGameThread(
 }
 
 async function sendPingMessageInChannel(
+  guildId,
   gameThreadId,
   creatorId,
   playerCount,
@@ -162,7 +165,7 @@ async function sendPingMessageInChannel(
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
-      content: `<@&${CONFIG.loungeRoleId}> New Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n- Voice Chat: ${voiceChat ? 'Enabled' : 'Disabled'}\n\nUse the button below to join the game!`,
+      content: `<@&${CONFIG.loungeRoleId[guildId]}> New Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n- Voice Chat: ${voiceChat ? 'Enabled' : 'Disabled'}\n\nUse the button below to join the game!`,
     },
     {
       type: MessageComponentTypes.ACTION_ROW,
@@ -176,7 +179,7 @@ async function sendPingMessageInChannel(
       ],
     },
   ]
-  return await SendMessageWithComponents(CONFIG.loungeChannelId, components)
+  return await SendMessageWithComponents(CONFIG.loungeChannelId[guildId], components)
 }
 
 async function sendInitialMessage(gameId, creatorId, playerCount) {

@@ -12,8 +12,8 @@ export class JoinGameError extends Error {
 }
 
 // TODO:
-// - Add a tiner for selecting settings
-export default async function JoinGame(playerId, gameId) {
+// - Add a timer for selecting settings
+export default async function JoinGame(guildId, playerId, gameId) {
   // Fetch the game from Redis
   let game = await GetGame(gameId)
   if (!game) {
@@ -36,7 +36,7 @@ export default async function JoinGame(playerId, gameId) {
     // Send the initial message in the game thread with settings options
     await Promise.all([
       sendLobbyFullMessage(gameId),
-      updatePingMessage(gameId),
+      updatePingMessage(guildId, gameId),
       updateGameFilled(gameId)
     ])
   } else {
@@ -108,7 +108,7 @@ async function sendLobbyFullMessage(gameId) {
   await SendMessageWithComponents(gameId, components)
 }
 
-async function updatePingMessage(gameId) {
+async function updatePingMessage(guildId, gameId) {
   const game = await GetGame(gameId)
 
   const components = [
@@ -118,7 +118,7 @@ async function updatePingMessage(gameId) {
     }
   ]
 
-  await UpdateMessageWithComponents(CONFIG.loungeChannelId, game.pingMessageId, components)
+  await UpdateMessageWithComponents(CONFIG.loungeChannelId[guildId], game.pingMessageId, components)
 }
 
 async function sendWelcomeMessage(gameId, playerId) {

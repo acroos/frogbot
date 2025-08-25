@@ -13,7 +13,7 @@ export class LeaveGameError extends Error {
 // TODO:
 // - Don't allow host to leave game
 // - If last player leaves game, cancel game
-export default async function LeaveGame(playerId, gameId) {
+export default async function LeaveGame(guildId, playerId, gameId) {
   // Fetch the game from Redis
   let game = await GetGame(gameId)
   if (!game) {
@@ -36,13 +36,13 @@ export default async function LeaveGame(playerId, gameId) {
   const results = await Promise.all([
     RemovePlayerInGame(playerId),
     RemovePlayerFromThread(gameId, playerId),
-    updateGamePingMessage(gameId)
+    updateGamePingMessage(guildId, gameId)
   ])
 
   return results
 }
 
-async function updateGamePingMessage(gameId) {
+async function updateGamePingMessage(guildId, gameId) {
   const game = await GetGame(gameId)
   const { gameThreadId, creatorId, playerCount, eloRequirement, voiceChat } = game
 
@@ -63,5 +63,5 @@ async function updateGamePingMessage(gameId) {
       ],
     },
   ]
-  return await SendMessageWithComponents(CONFIG.loungeChannelId, components)
+  return await SendMessageWithComponents(CONFIG.loungeChannelId[guildId], components)
 }

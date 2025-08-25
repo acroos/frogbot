@@ -161,3 +161,7 @@ export function ReadPlayerIdFromContext(body) {
   // Otherwise, return the user ID directly
   return body.user.id
 }
+
+export function ReadGuildIdFromContext(body) {
+  return body.guild_id
+}
