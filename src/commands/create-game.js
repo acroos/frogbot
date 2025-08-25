@@ -133,6 +133,8 @@ async function createGameThread(
   eloRequirement,
   voiceChat
 ) {
+  console.log(`Creating game thread in guild: ${guildId}`);
+  console.log(`Using lounge channel ID: ${CONFIG.loungeChannelId[guildId]}`);
   // /channels/{channel.id}/threads
   const result = await DiscordRequest(
     `channels/${CONFIG.loungeChannelId[guildId]}/threads`,
