@@ -1,5 +1,5 @@
 import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
-import { RemovePlayerFromThread, SendMessageWithComponents } from '../utils/discord.js'
+import { RemovePlayerFromThread, UpdateMessageWithComponents } from '../utils/discord.js'
 import { GetGame, RemovePlayerInGame, SetGame } from '../utils/redis.js'
 import CONFIG from '../config.js'
 
@@ -63,5 +63,5 @@ async function updateGamePingMessage(guildId, gameId) {
       ],
     },
   ]
-  return await SendMessageWithComponents(CONFIG.loungeChannelId[guildId], components)
+  return await UpdateMessageWithComponents(CONFIG.loungeChannelId[guildId], game.pingMessageId, components)
 }
