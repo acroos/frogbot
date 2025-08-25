@@ -7,11 +7,11 @@ const CONFIG = {
   discordToken: process.env.DISCORD_TOKEN || 'your-discord-token', // Your Discord bot token
   loungeChannelId: {
     '465846009164070912': '1408117493251182713',
-    '1401765937241395273': '1400631040065671169',
+    '1401765937241395273': '1401765962679844926',
   }, // Discord Channel ID for the Risk Competitive Lounge
   loungeRoleId: {
     '465846009164070912': '1408116717627904020',
-    '1401765937241395273': '1401448826375508009',
+    '1401765937241395273': '1401766016836571137',
   }, // Discord Role ID for the Risk Competitive Lounge
   friendsOfRiskApiBaseUrl: process.env.FRIENDS_OF_RISK_API_BASE_URL || 'https://friendsofrisk.com/api', // Base URL for Friends of Risk API
   friendsOfRiskApiKey: process.env.FRIENDS_OF_RISK_API_KEY || 'your-friends-of-risk-api-key', // API key for Friends of Risk
