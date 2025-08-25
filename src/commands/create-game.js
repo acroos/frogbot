@@ -119,6 +119,8 @@ function validateArguments(playerCount, eloRequirement, voiceChat) {
 }
 
 function validateCreatorElo(creatorData, requiredElo) {
+  if (requiredElo <= 0) return
+
   const creatorElo = creatorData?.ffa_elo_score || 0
 
   if (!creatorElo || creatorElo < requiredElo) {
