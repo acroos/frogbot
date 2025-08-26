@@ -92,21 +92,29 @@ export function CleanUpOldGames() {
 export function CloseSettingsSelection() {
   const startTime = Date.now()
   MapToAllGames(async (game) => {
-    if (game.filledAt && startTime - game.filledAt > SETTINGS_SELECTION_TIME && !game.selectedSettingId) {
-      const votes = Object.values(game.settingsVotes)
-      const selectedSettings =
-        votes.length > 0
-          ? votes[Math.floor(Math.random() * votes.length)]
-          : game.settingsOptions[
-              Math.floor(Math.random() * game.settingsOptions.length)
-            ]
-
-      game.selectedSettingId = selectedSettings.settingid
-      return await Promise.all([
-        sendStartGameMessage(game, selectedSettings),
-        SetGame(game.gameThreadId, game),
-      ])
+    // Settings have already been selected
+    if (game.selectedSettingId) {
+      return
     }
+    // Not enough time has passed
+    if (game.filledAt && startTime - game.filledAt < SETTINGS_SELECTION_TIME) {
+      return
+    }
+    console.log(`Closing settings selection for game: ${game.gameThreadId}. Settings: ${game.selectedSettingId}`)
+
+    const votes = Object.values(game.settingsVotes)
+    const selectedSettings =
+      votes.length > 0
+        ? votes[Math.floor(Math.random() * votes.length)]
+        : game.settingsOptions[
+            Math.floor(Math.random() * game.settingsOptions.length)
+          ]
+
+    game.selectedSettingId = selectedSettings.settingid
+    return await Promise.all([
+      sendStartGameMessage(game, selectedSettings),
+      SetGame(game.gameThreadId, game),
+    ])
   })
 }
 
