@@ -1,4 +1,5 @@
 import {
+  ButtonStyleTypes,
   MessageComponentTypes,
 } from 'discord-interactions'
 import { GetGame, SetGame } from '../utils/redis.js'
