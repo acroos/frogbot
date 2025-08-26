@@ -16,7 +16,6 @@ import {
 import JoinGame, { JoinGameError } from './commands/join-game.js'
 import LeaveGame, { LeaveGameError } from './commands/leave-game.js'
 import SettingsPollSelectionMade from './commands/settings-poll-selection.js'
-import GenericErrorHandler from './utils/error-handler.js'
 import WinnerSelection from './commands/winner-selection.js'
 import {
   CleanUpFinalizedGames,
@@ -239,7 +238,6 @@ export default async function CreateApp() {
   // Create an express app
   const app = express()
 
-  app.use(GenericErrorHandler) // Use the generic error handler
   app.use(express.json()) // Parse JSON bodies
 
   app.get('/health', function (_req, res) {

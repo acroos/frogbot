@@ -1,6 +1,5 @@
 import { createClient } from 'redis'
 import CONFIG from '../config.js'
-import { LockThread } from './discord.js'
 
 const FINALIZED_GAMES_KEY = 'finalized-games'
 

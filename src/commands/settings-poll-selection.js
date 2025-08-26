@@ -7,7 +7,6 @@ import {
   SendMessageWithComponents,
   SendMessageWithContent,
 } from '../utils/discord.js'
-import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
 
 class SettingsAlreadyFinalizedError extends Error {
   constructor(message) {
@@ -88,10 +87,6 @@ async function pingRemainingVotes(gameId) {
 
 async function sendStartGameMessage(gameId, selectedSettings) {
   const game = await GetGame(gameId)
-  console.log(`Game right before starting: ${JSON.stringify(game)}`)
-  const players = await Promise.all(
-    game.players.map((playerId) => FetchPlayerInfo(playerId))
-  )
 
   const components = [
     {

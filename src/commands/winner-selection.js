@@ -1,9 +1,8 @@
-import { LockThread, SendMessageWithContent } from '../utils/discord.js'
+import { SendMessageWithContent } from '../utils/discord.js'
 import { FriendsOfRiskRequest } from '../utils/friends-of-risk.js'
 import {
   GetGame,
   RemoveAllPlayersInGame,
-  RemovePlayerInGame,
   SetGame,
 } from '../utils/redis.js'
 

@@ -11,7 +11,6 @@ import {
   MapToAllGames,
   SetFinalizedGames,
   SetGame,
-  GetGame,
   RemoveAllPlayersInGame,
 } from './redis.js'
 
@@ -105,7 +104,7 @@ export function CloseSettingsSelection() {
       game.selectedSettingId = selectedSettings.settingid
       return await Promise.all([
         sendStartGameMessage(game, selectedSettings),
-        SetGame(gameId, game),
+        SetGame(game.gameThreadId, game),
       ])
     }
   })

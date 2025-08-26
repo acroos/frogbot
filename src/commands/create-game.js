@@ -7,7 +7,6 @@ import {
   AddPlayerToThread,
   DiscordRequest,
   SendMessageWithComponents,
-  SendMessageWithContent,
 } from '../utils/discord.js'
 import {
   FriendsOfRiskRequest,
