@@ -92,7 +92,7 @@ export function CleanUpOldGames() {
 export function CloseSettingsSelection() {
   const startTime = Date.now()
   MapToAllGames(async (game) => {
-    if (game.filledAt && startTime - game.filledAt > SETTINGS_SELECTION_TIME) {
+    if (game.filledAt && startTime - game.filledAt > SETTINGS_SELECTION_TIME && !game.selectedSettingId) {
       const votes = Object.values(game.settingsVotes)
       const selectedSettings =
         votes.length > 0
