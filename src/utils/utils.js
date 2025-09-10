@@ -7,11 +7,11 @@ import {
 import { FetchPlayerInfo } from './friends-of-risk.js'
 import {
   GetFinalizedGames,
-  RemoveGame,
   MapToAllGames,
+  RemoveAllPlayersInGame,
+  RemoveGame,
   SetFinalizedGames,
   SetGame,
-  RemoveAllPlayersInGame,
 } from './redis.js'
 
 const THREAD_OPEN_TIME = 180000 // 3 minutes in ms
@@ -96,11 +96,15 @@ export function CloseSettingsSelection() {
     if (game.selectedSettingId) {
       return
     }
-    // Not enough time has passed
-    if (game.filledAt && startTime - game.filledAt < SETTINGS_SELECTION_TIME) {
+    // Game has not been filled
+    if (!game.filledAt) {
       return
     }
-    console.log(`Closing settings selection for game: ${game.gameThreadId}. Settings: ${game.selectedSettingId}`)
+    // Not enough time has passed
+    if (startTime - game.filledAt < SETTINGS_SELECTION_TIME) {
+      return
+    }
+    console.log(`Closing settings selection for game: ${game.gameThreadId}`)
 
     const votes = Object.values(game.settingsVotes)
     const selectedSettings =

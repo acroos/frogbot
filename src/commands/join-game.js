@@ -1,18 +1,26 @@
 import { MessageComponentTypes } from 'discord-interactions'
-import { AddPlayerToThread, SendMessageWithComponents, SendMessageWithContent, UpdateMessageWithComponents } from '../utils/discord.js'
+import {
+  AddPlayerToThread,
+  SendMessageWithComponents,
+  SendMessageWithContent,
+  UpdateMessageWithComponents,
+} from '../utils/discord.js'
 import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
-import { GetGame, GetPlayerInGame, SetGame, SetPlayerInGame } from '../utils/redis.js'
-import CONFIG from '../config.js';
+import {
+  GetGame,
+  GetPlayerInGame,
+  SetGame,
+  SetPlayerInGame,
+} from '../utils/redis.js'
+import CONFIG from '../config.js'
 
 export class JoinGameError extends Error {
   constructor(message, options) {
-    super(message, options);
-    this.name = 'JoinGameError';
+    super(message, options)
+    this.name = 'JoinGameError'
   }
 }
 
-// TODO:
-// - Add a timer for selecting settings
 export default async function JoinGame(guildId, playerId, gameId) {
   // Fetch the game from Redis
   let game = await GetGame(gameId)
@@ -37,7 +45,7 @@ export default async function JoinGame(guildId, playerId, gameId) {
     await Promise.all([
       sendLobbyFullMessage(gameId),
       updatePingMessage(guildId, gameId),
-      updateGameFilled(gameId)
+      updateGameFilled(gameId),
     ])
   } else {
     await sendWelcomeMessage(gameId, playerId)
@@ -66,7 +74,9 @@ async function validateJoinGameConditions(game, playerId) {
     const playerElo = data?.ffa_elo_score || 0
 
     if (playerElo < game.eloRequirement) {
-      throw new JoinGameError(`Player does not meet the ELO requirement. Current ELO: ${playerElo}, Required ELO: ${game.eloRequirement}.`)
+      throw new JoinGameError(
+        `Player does not meet the ELO requirement. Current ELO: ${playerElo}, Required ELO: ${game.eloRequirement}.`
+      )
     }
   }
 
@@ -115,10 +125,14 @@ async function updatePingMessage(guildId, gameId) {
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
       content: `Risk Competitive Lounge game created by <@${game.creatorId}>!\n- Player Count: ${game.playerCount}\n- ELO Requirement: ${game.eloRequirement}\n- Voice Chat: ${game.voiceChat ? 'Enabled' : 'Disabled'}\n\nGame has filled, keep an eye out for the next one or start your own with the \`/create_game\` command`,
-    }
+    },
   ]
 
-  await UpdateMessageWithComponents(CONFIG.loungeChannelId[guildId], game.pingMessageId, components)
+  await UpdateMessageWithComponents(
+    CONFIG.loungeChannelId[guildId],
+    game.pingMessageId,
+    components
+  )
 }
 
 async function sendWelcomeMessage(gameId, playerId) {

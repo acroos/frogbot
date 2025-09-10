@@ -1,7 +1,16 @@
 import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
-import { RemovePlayerFromThread, UpdateMessageWithComponents } from '../utils/discord.js'
-import { GetGame, RemovePlayerInGame, SetGame } from '../utils/redis.js'
 import CONFIG from '../config.js'
+import {
+  RemoveMessage,
+  RemovePlayerFromThread,
+  UpdateMessageWithComponents,
+} from '../utils/discord.js'
+import {
+  GetGame,
+  RemoveGame,
+  RemovePlayerInGame,
+  SetGame,
+} from '../utils/redis.js'
 
 export class LeaveGameError extends Error {
   constructor(message, options) {
@@ -11,7 +20,6 @@ export class LeaveGameError extends Error {
 }
 
 // TODO:
-// - Don't allow host to leave game
 // - If last player leaves game, cancel game
 export default async function LeaveGame(guildId, playerId, gameId) {
   // Fetch the game from Redis
@@ -36,7 +44,8 @@ export default async function LeaveGame(guildId, playerId, gameId) {
   const results = await Promise.all([
     RemovePlayerInGame(playerId),
     RemovePlayerFromThread(gameId, playerId),
-    updateGamePingMessage(guildId, gameId)
+    updateGamePingMessage(guildId, gameId),
+    cancelGameIfEmpty(guildId, gameId),
   ])
 
   return results
@@ -44,7 +53,8 @@ export default async function LeaveGame(guildId, playerId, gameId) {
 
 async function updateGamePingMessage(guildId, gameId) {
   const game = await GetGame(gameId)
-  const { gameThreadId, creatorId, playerCount, eloRequirement, voiceChat } = game
+  const { gameThreadId, creatorId, playerCount, eloRequirement, voiceChat } =
+    game
 
   const components = [
     {
@@ -63,5 +73,20 @@ async function updateGamePingMessage(guildId, gameId) {
       ],
     },
   ]
-  return await UpdateMessageWithComponents(CONFIG.loungeChannelId[guildId], game.pingMessageId, components)
+  return await UpdateMessageWithComponents(
+    CONFIG.loungeChannelId[guildId],
+    game.pingMessageId,
+    components
+  )
+}
+
+async function cancelGameIfEmpty(guildId, gameId) {
+  const game = await GetGame(gameId)
+  const { players, pingMessageId, gameThreadId } = game
+  if (players.length === 0) {
+    await Promise.all([
+      RemoveMessage(CONFIG.loungeChannelId[guildId], pingMessageId),
+      RemoveGame(gameThreadId),
+    ])
+  }
 }

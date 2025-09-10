@@ -41,7 +41,7 @@ export async function SendMessageWithContent(channelId, content) {
   const result = await DiscordRequest(`channels/${channelId}/messages`, {
     method: 'POST',
     body: {
-      content: content
+      content: content,
     },
   })
   if (!result.ok) {
@@ -62,7 +62,9 @@ export async function SendMessageWithComponents(channelId, components) {
     },
   })
   if (!result.ok) {
-    throw new Error(`Failed to send message with components: ${result.statusText}`)
+    throw new Error(
+      `Failed to send message with components: ${result.statusText}`
+    )
   }
 
   const json = await result.json()
@@ -70,17 +72,22 @@ export async function SendMessageWithComponents(channelId, components) {
   return json
 }
 
-export async function UpdateMessageWithComponents(channelId, messageId, components) {
-  
-  const result = await DiscordRequest(`channels/${channelId}/messages/${messageId}`, {
+export async function UpdateMessageWithComponents(
+  channelId,
+  messageId,
+  components
+) {
+  const result = await DiscordRequest(
+    `channels/${channelId}/messages/${messageId}`,
+    {
       method: 'PATCH',
       body: {
-        components: components
-      }
+        components: components,
+      },
     }
   )
 
-    if (!result.ok) {
+  if (!result.ok) {
     throw new Error(`Failed to send message: ${result.statusText}`)
   }
 
@@ -89,10 +96,27 @@ export async function UpdateMessageWithComponents(channelId, messageId, componen
   return json
 }
 
+export async function RemoveMessage(channelId, messageId) {
+  const result = await DiscordRequest(
+    `channels/${channelId}/messages/${messageId}`,
+    {
+      method: 'DELETE',
+    }
+  )
+  if (!result.ok) {
+    throw new Error(`Failed to remove message: ${result.statusText}`)
+  }
+
+  return result
+}
+
 export async function AddPlayerToThread(threadId, playerId) {
-  const result = await DiscordRequest(`channels/${threadId}/thread-members/${playerId}`, {
-    method: 'PUT',
-  })
+  const result = await DiscordRequest(
+    `channels/${threadId}/thread-members/${playerId}`,
+    {
+      method: 'PUT',
+    }
+  )
   if (!result.ok) {
     throw new Error(`Failed to add player to thread: ${result.statusText}`)
   }
@@ -101,9 +125,12 @@ export async function AddPlayerToThread(threadId, playerId) {
 }
 
 export async function RemovePlayerFromThread(threadId, playerId) {
-  const result = await DiscordRequest(`channels/${threadId}/thread-members/${playerId}`, {
-    method: 'DELETE',
-  })
+  const result = await DiscordRequest(
+    `channels/${threadId}/thread-members/${playerId}`,
+    {
+      method: 'DELETE',
+    }
+  )
   if (!result.ok) {
     throw new Error(`Failed to remove player from thread: ${result.statusText}`)
   }
@@ -115,11 +142,11 @@ export async function LockThread(threadId) {
   const result = await DiscordRequest(`channels/${threadId}`, {
     method: 'PATCH',
     body: {
-      locked: true
-    }
+      locked: true,
+    },
   })
 
-    if (!result.ok) {
+  if (!result.ok) {
     throw new Error(`Failed to lock thread: ${result.statusText}`)
   }
 
@@ -127,11 +154,11 @@ export async function LockThread(threadId) {
 }
 
 export async function CloseThread(threadId) {
-    const result = await DiscordRequest(`channels/${threadId}`, {
+  const result = await DiscordRequest(`channels/${threadId}`, {
     method: 'DELETE',
   })
 
-    if (!result.ok) {
+  if (!result.ok) {
     throw new Error(`Failed to close thread: ${result.statusText}`)
   }
 
@@ -139,7 +166,11 @@ export async function CloseThread(threadId) {
 }
 
 /* Discord helpers */
-export function ReadDiscordCommandOptionFromData(data, name, defaultValue = null) {
+export function ReadDiscordCommandOptionFromData(
+  data,
+  name,
+  defaultValue = null
+) {
   // Find the option in the data
   const option = data.options.find((opt) => opt.name === name)
 
