@@ -1,29 +1,29 @@
-import express from 'express'
 import {
   InteractionResponseFlags,
   InteractionResponseType,
   InteractionType,
   verifyKeyMiddleware,
 } from 'discord-interactions'
+import express from 'express'
 import cron from 'node-cron'
-import CONFIG from './config.js'
 import CreateGame, { CreateGameError } from './commands/create-game.js'
+import FinishGame from './commands/finish-game.js'
+import JoinGame, { JoinGameError } from './commands/join-game.js'
+import LeaveGame, { LeaveGameError } from './commands/leave-game.js'
+import SettingsPollSelectionMade from './commands/settings-poll-selection.js'
+import WinnerSelection from './commands/winner-selection.js'
+import CONFIG from './config.js'
 import {
   ReadDiscordCommandOptionFromData,
   ReadGuildIdFromContext,
   ReadPlayerIdFromContext,
 } from './utils/discord.js'
-import JoinGame, { JoinGameError } from './commands/join-game.js'
-import LeaveGame, { LeaveGameError } from './commands/leave-game.js'
-import SettingsPollSelectionMade from './commands/settings-poll-selection.js'
-import WinnerSelection from './commands/winner-selection.js'
 import {
   CleanUpFinalizedGames,
   CleanUpOldGames,
   CloseSettingsSelection,
   FinalizeGames,
 } from './utils/utils.js'
-import FinishGame from './commands/finish-game.js'
 
 async function handleCreateGameCommand(req, res) {
   const { data } = req.body
@@ -292,7 +292,7 @@ export default async function CreateApp() {
         } else if (custom_id.startsWith('leave_game_')) {
           return await handleLeaveGameButton(req, res, custom_id)
         } else if (custom_id.startsWith('finish_game_')) {
-          return await FinishGame
+          return await handleFinishGameButton(req, res, custom_id)
         }
 
         console.error(`unknown component interaction: ${custom_id}`)

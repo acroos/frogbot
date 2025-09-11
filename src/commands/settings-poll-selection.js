@@ -1,7 +1,4 @@
-import {
-  ButtonStyleTypes,
-  MessageComponentTypes,
-} from 'discord-interactions'
+import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
 import { GetGame, SetGame } from '../utils/redis.js'
 import {
   SendMessageWithComponents,
@@ -77,7 +74,9 @@ async function maybeFinalizeVote(gameId) {
 async function pingRemainingVotes(gameId) {
   const game = await GetGame(gameId)
   const alreadyVoted = Object.keys(game.settingsVotes)
-  const remainingVoters = game.players.filter((playerId) => !alreadyVoted.includes(playerId))
+  const remainingVoters = game.players.filter(
+    (playerId) => !alreadyVoted.includes(playerId)
+  )
 
   await SendMessageWithContent(
     gameId,
@@ -106,12 +105,10 @@ async function sendStartGameMessage(gameId, selectedSettings) {
     },
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
-      content:
-        'When the game is complete, please click the button below',
+      content: 'When the game is complete, please click the button below',
     },
     {
       type: MessageComponentTypes.ACTION_ROW,
-      placeholder: 'Select a winner',
       components: [
         {
           type: MessageComponentTypes.BUTTON,
