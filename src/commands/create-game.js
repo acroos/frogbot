@@ -81,6 +81,9 @@ export default async function CreateGame(
   ])
 
   const settingsOptions = GetRandomizedSettings(playerCount) // Fetch the settings players can vote on
+
+  console.log('Settings options for the game:', JSON.stringify(settingsOptions))
+
   const pingMessage = promiseResults[2]
 
   const newGame = {
