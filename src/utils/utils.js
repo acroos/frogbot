@@ -148,7 +148,6 @@ async function sendStartGameMessage(game, selectedSettings) {
           media: {
             url: selectedSettings.link,
           },
-          description: `${selectedSettings.map} ${selectedSettings.cards} ${selectedSettings.gametype} [#${selectedSettings.settingid}]`,
         },
       ],
     },
