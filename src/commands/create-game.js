@@ -1,18 +1,13 @@
-import {
-  ButtonStyleTypes,
-  MessageComponentTypes,
-} from 'discord-interactions'
+import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
 import CONFIG from '../config.js'
 import {
   AddPlayerToThread,
   DiscordRequest,
   SendMessageWithComponents,
 } from '../utils/discord.js'
-import {
-  FriendsOfRiskRequest,
-  FetchPlayerInfo,
-} from '../utils/friends-of-risk.js'
+import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
 import { GetPlayerInGame, SetGame, SetPlayerInGame } from '../utils/redis.js'
+import { GetRandomizedSettings } from '../utils/utils.js'
 
 export class CreateGameError extends Error {
   constructor(message, options) {
@@ -24,7 +19,7 @@ export class CreateGameError extends Error {
 class EloRequirementNotMetError extends CreateGameError {
   constructor(playerElo, requiredElo) {
     super(
-      `Your ELO (${playerElo}) does not meet the ELO requirement (${requiredElo}) requested for this game. Please create a game with a lower ELO requirement.`,
+      `Your ELO (${playerElo}) does not meet the ELO requirement (${requiredElo}) requested for this game. Please create a game with a lower ELO requirement.`
     )
     this.name = 'EloRequirementNotMetError'
   }
@@ -52,7 +47,9 @@ export default async function CreateGame(
   // Validate player is not already in game
   const creatorCurrentGame = await GetPlayerInGame(creatorId)
   if (creatorCurrentGame) {
-    throw new CreateGameError(`Player ${creatorId} is already in game ${creatorCurrentGame}`)
+    throw new CreateGameError(
+      `Player ${creatorId} is already in game ${creatorCurrentGame}`
+    )
   }
 
   const creatorPlayerInfo = await FetchPlayerInfo(creatorId)
@@ -61,18 +58,30 @@ export default async function CreateGame(
   validateCreatorElo(creatorPlayerInfo, eloRequirement)
 
   // Create the game thread
-  const gameThreadId = await createGameThread(guildId, creatorPlayerInfo.name, playerCount, eloRequirement, voiceChat)
+  const gameThreadId = await createGameThread(
+    guildId,
+    creatorPlayerInfo.name,
+    playerCount,
+    eloRequirement,
+    voiceChat
+  )
 
   const promiseResults = await Promise.all([
-    fetchSettingsOptions(playerCount), // Fetch the settings players can vote on
     sendInitialMessage(gameThreadId, creatorId, playerCount), // Send the initial message in the thread
     AddPlayerToThread(gameThreadId, creatorId), // Add the creator to the game thread
-    sendPingMessageInChannel(guildId, gameThreadId, creatorId, playerCount, eloRequirement, voiceChat), // Send a ping message in the lounge channel to notify players
-    SetPlayerInGame(creatorId, gameThreadId)
+    sendPingMessageInChannel(
+      guildId,
+      gameThreadId,
+      creatorId,
+      playerCount,
+      eloRequirement,
+      voiceChat
+    ), // Send a ping message in the lounge channel to notify players
+    SetPlayerInGame(creatorId, gameThreadId),
   ])
 
-  const settingsOptions = promiseResults[0]
-  const pingMessage = promiseResults[3]
+  const settingsOptions = GetRandomizedSettings(playerCount) // Fetch the settings players can vote on
+  const pingMessage = promiseResults[2]
 
   const newGame = {
     gameThreadId: gameThreadId,
@@ -91,9 +100,9 @@ export default async function CreateGame(
     createdAt: Date.now(),
     filledAt: undefined,
   }
-  
+
   const savedGame = await SetGame(gameThreadId, newGame)
-  
+
   return savedGame // Save the game in Redis
 }
 
@@ -134,8 +143,8 @@ async function createGameThread(
   eloRequirement,
   voiceChat
 ) {
-  console.log(`Creating game thread in guild: ${guildId}`);
-  console.log(`Using lounge channel ID: ${CONFIG.loungeChannelId[guildId]}`);
+  console.log(`Creating game thread in guild: ${guildId}`)
+  console.log(`Using lounge channel ID: ${CONFIG.loungeChannelId[guildId]}`)
   // /channels/{channel.id}/threads
   const result = await DiscordRequest(
     `channels/${CONFIG.loungeChannelId[guildId]}/threads`,
@@ -182,7 +191,10 @@ async function sendPingMessageInChannel(
       ],
     },
   ]
-  return await SendMessageWithComponents(CONFIG.loungeChannelId[guildId], components)
+  return await SendMessageWithComponents(
+    CONFIG.loungeChannelId[guildId],
+    components
+  )
 }
 
 async function sendInitialMessage(gameId, creatorId, playerCount) {
@@ -204,22 +216,4 @@ async function sendInitialMessage(gameId, creatorId, playerCount) {
     },
   ]
   await SendMessageWithComponents(gameId, components)
-}
-
-async function fetchSettingsOptions(playerCount) {
-  // Fetch the settings poll options from the Friends of Risk API
-  const response = await FriendsOfRiskRequest(`getsettings`, {
-    method: 'POST',
-    body: { playercount: playerCount },
-  })
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch settings poll options: ${response.statusText}`
-    )
-  }
-
-  const data = await response.json()
-
-  return data.settings
 }
