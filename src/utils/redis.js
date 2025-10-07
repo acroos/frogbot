@@ -29,7 +29,7 @@ export async function GetGame(gameId) {
 
 export async function SetGame(gameId, game) {
   try {
-    await redisClient.set(gameIdToRedisKey(gameId), JSON.stringify(game))
+    await redisClient.SETEX(gameIdToRedisKey(gameId), 7200, JSON.stringify(game)) // Set with 2 hour expiration
   } catch (error) {
     console.error('Error setting value in Redis:', error)
     return null
@@ -63,7 +63,7 @@ export async function GetPlayerInGame(playerId) {
 }
 
 export async function SetPlayerInGame(playerId, gameId) {
-  await redisClient.set(playerIdToActiveGameId(playerId), gameId)
+  await redisClient.SETEX(playerIdToActiveGameId(playerId), 7200, gameId) // Set with 2 hour expiration
 }
 
 export async function RemovePlayerInGame(playerId) {
