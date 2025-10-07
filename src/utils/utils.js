@@ -77,8 +77,10 @@ export function CleanUpOldGames() {
     if (startTime - game.createdAt > OLD_GAME_THRESHOLD) {
       CloseThread(game.gameThreadId)
         .then(async () => {
-          await RemoveGame(game.gameThreadId)
-          await RemoveAllPlayersInGame(game.gameThreadId)
+
+          await RemoveAllPlayersInGame(game.gameThreadId).then(async () => {
+            await RemoveGame(game.gameThreadId)
+          })
         })
         .catch((error) => {
           console.error('Error cleaning up old games: ', error)
