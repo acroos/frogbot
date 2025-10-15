@@ -1,7 +1,7 @@
-import { MessageComponentTypes } from "discord-interactions"
-import { SendMessageWithComponents } from "../utils/discord.js"
-import { GetGame, SetGame } from "../utils/redis.js"
-import { FetchPlayerInfo } from "../utils/friends-of-risk.js"
+import { MessageComponentTypes } from 'discord-interactions'
+import { SendMessageWithComponents } from '../utils/discord.js'
+import { GetGame, SetGame } from '../utils/redis.js'
+import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
 
 export default async function FinishGame(gameId) {
   let game = await GetGame(gameId)
@@ -29,10 +29,16 @@ export default async function FinishGame(gameId) {
         {
           type: MessageComponentTypes.STRING_SELECT,
           custom_id: `winner_selection_${gameId}`,
-          options: players.map((player) => ({
-            label: player.name,
-            value: player.discordid,
-          })),
+          options: [
+            ...players.map((player) => ({
+              label: player.name,
+              value: player.discordid,
+            })),
+            {
+              label: 'Game was not played',
+              value: 'not_played',
+            },
+          ],
         },
       ],
     },

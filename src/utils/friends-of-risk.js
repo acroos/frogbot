@@ -20,7 +20,7 @@ export async function FriendsOfRiskRequest(endpoint, options) {
     const url = `${CONFIG.friendsOfRiskApiBaseUrl}/${endpoint}`
     // Stringify payloads
     if (options.body) options.body = JSON.stringify(options.body)
-      
+
     // Use fetch to make requests
     const request = {
       headers: {
@@ -28,7 +28,7 @@ export async function FriendsOfRiskRequest(endpoint, options) {
         'Content-Type': 'application/json; charset=UTF-8',
         'User-Agent': 'FrogBot (https://github.com/acroos/frogbot, 1.0.0)',
       },
-      ...options
+      ...options,
     }
     const res = await fetch(url, request)
     // throw API errors

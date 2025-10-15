@@ -177,19 +177,27 @@ async function handleWinnerPollSelection(req, res, customId) {
   const selectionAccepted = await WinnerSelection(threadId, playerId, winnerId)
 
   if (selectionAccepted) {
+    const responseContent = winnerId === 'not_played' 
+      ? 'Your vote that the game was not played has been counted'
+      : `Your selection of <@${winnerId}> as winner has been counted`
+
     return res.send({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         flags: InteractionResponseFlags.EPHEMERAL,
-        content: `Your selection of <@${winnerId}> as winner has been counted`,
+        content: responseContent,
       },
     })
   } else {
+    const errorContent = winnerId === 'not_played'
+      ? 'Your vote that the game was not played could not be counted. Please try again.'
+      : `Your selection of <@${winnerId}> as winner could not be counted.  Please try again.`
+
     return res.send({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         flags: InteractionResponseFlags.EPHEMERAL,
-        content: `Your selection of <@${winnerId}> as winner could not be counted.  Please try again.`,
+        content: errorContent,
       },
     })
   }

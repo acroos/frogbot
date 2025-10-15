@@ -29,7 +29,11 @@ export async function GetGame(gameId) {
 
 export async function SetGame(gameId, game) {
   try {
-    await redisClient.SETEX(gameIdToRedisKey(gameId), 7200, JSON.stringify(game)) // Set with 2 hour expiration
+    await redisClient.SETEX(
+      gameIdToRedisKey(gameId),
+      7200,
+      JSON.stringify(game)
+    ) // Set with 2 hour expiration
   } catch (error) {
     console.error('Error setting value in Redis:', error)
     return null
@@ -75,14 +79,14 @@ export async function RemoveAllPlayersInGame(gameId) {
   if (!game) {
     throw new Error(`Could not find game with ID: ${gameId}`)
   }
-  for(let playerId of game.players) {
+  for (let playerId of game.players) {
     await RemovePlayerInGame(playerId)
   }
 }
 
 export async function ScanMap(mapFunc) {
   for await (const keys of redisClient.scanIterator()) {
-    for(const key of keys) {
+    for (const key of keys) {
       const value = await redisClient.get(key)
       const parsed = JSON.parse(value)
 
@@ -92,7 +96,7 @@ export async function ScanMap(mapFunc) {
 }
 
 export async function MapToAllGames(mapFunc) {
-  for await (const keys of redisClient.scanIterator({MATCH: "game-*"})) {
+  for await (const keys of redisClient.scanIterator({ MATCH: 'game-*' })) {
     for (const key of keys) {
       const value = await redisClient.get(key)
       const parsed = JSON.parse(value)

@@ -21,12 +21,32 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
   const voteCount = Object.keys(game.winnerVotes).length
   const requiredVotes = requiredVotesMap[game.playerCount]
 
+  // Count "not played" votes
+  const notPlayedVotes = Object.values(game.winnerVotes).filter(
+    (vote) => vote === 'not_played'
+  ).length
+
+  // If multiple players voted "not played", end the game without a winner
+  if (notPlayedVotes >= 2) {
+    await Promise.all([
+      SendMessageWithContent(
+        gameId,
+        `Multiple players indicated the game was not played. The game has been ended without recording a winner.`
+      ),
+      RemoveAllPlayersInGame(gameId),
+    ])
+    return true
+  }
+
   if (voteCount >= requiredVotes) {
     console.log(`Votes: ${JSON.stringify(game.winnerVotes)}`)
-    const winner = determineWinner(
-      Object.values(game.winnerVotes),
-      requiredVotes
+
+    // Filter out "not played" votes when determining winner
+    const playerVotes = Object.values(game.winnerVotes).filter(
+      (vote) => vote !== 'not_played'
     )
+    const winner = determineWinner(playerVotes, requiredVotes)
+
     if (winner === null && voteCount === game.playerCount) {
       await SendMessageWithContent(
         gameId,
@@ -34,7 +54,8 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
           game.winnerVotes
         )
           .map(
-            ([voter, winner]) => `- Voter: <@${voter}> -> Winner: <@${winner}>`
+            ([voter, winner]) =>
+              `- Voter: <@${voter}> -> Winner: ${winner === 'not_played' ? 'Game not played' : `<@${winner}>`}`
           )
           .join('\n')}`
       )
@@ -43,7 +64,7 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
         gameId,
         game.selectedSettingId,
         game.players,
-        winnerId
+        winner
       )
       if (!response.ok) {
         return false

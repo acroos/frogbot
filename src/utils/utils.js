@@ -77,7 +77,6 @@ export function CleanUpOldGames() {
     if (startTime - game.createdAt > OLD_GAME_THRESHOLD) {
       CloseThread(game.gameThreadId)
         .then(async () => {
-
           await RemoveAllPlayersInGame(game.gameThreadId).then(async () => {
             await RemoveGame(game.gameThreadId)
           })
@@ -183,10 +182,16 @@ async function sendStartGameMessage(game, selectedSettings) {
         {
           type: MessageComponentTypes.STRING_SELECT,
           custom_id: `winner_selection_${gameId}`,
-          options: players.map((player) => ({
-            label: player.name,
-            value: player.discordid,
-          })),
+          options: [
+            ...players.map((player) => ({
+              label: player.name,
+              value: player.discordid,
+            })),
+            {
+              label: 'Game was not played',
+              value: 'not_played',
+            },
+          ],
         },
       ],
     },
@@ -198,226 +203,226 @@ async function sendStartGameMessage(game, selectedSettings) {
 const SETTINGS_BY_PLAYER_COUNT = {
   4: [
     {
-      "settingid": "8268",
-      "map": "Arrakis",
-      "gametype": "70",
-      "cards": "fixed",
-      "link": "https://friendsofrisk.com/setting/8268.png"
+      settingid: '8268',
+      map: 'Arrakis',
+      gametype: '70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/8268.png',
     },
     {
-      "settingid": "8269",
-      "map": "Jules Vernes Mysterious Island",
-      "gametype": "70",
-      "cards": "fixed",
-      "link": "https://friendsofrisk.com/setting/8269.png"
-    },    
-    
+      settingid: '8269',
+      map: 'Jules Vernes Mysterious Island',
+      gametype: '70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/8269.png',
+    },
+
     {
-      "settingid": "8270",
-      "map": "Dracon Fortress",
-      "gametype": "70",
-      "cards": "fixed",
-      "link": "https://friendsofrisk.com/setting/8270.png"
+      settingid: '8270',
+      map: 'Dracon Fortress',
+      gametype: '70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/8270.png',
     },
     {
-      "settingid": "8271",
-      "map": "SMG Spaceport",
-      "gametype": "70",
-      "cards": "fixed",
-      "link": "https://friendsofrisk.com/setting/8271.png"
+      settingid: '8271',
+      map: 'SMG Spaceport',
+      gametype: '70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/8271.png',
     },
     {
-      "settingid": "8272",
-      "map": "Europe",
-      "gametype": "70",
-      "cards": "fixed",
-      "link": "https://friendsofrisk.com/setting/8272.png"
+      settingid: '8272',
+      map: 'Europe',
+      gametype: '70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/8272.png',
     },
     {
-      "settingid": "8273",
-      "map": "Arrakeen",
-      "gametype": "70",
-      "cards": "fixed",
-      "link": "https://friendsofrisk.com/setting/8273.png"
-    }
+      settingid: '8273',
+      map: 'Arrakeen',
+      gametype: '70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/8273.png',
+    },
   ],
   5: [
     {
-      "settingid": "8261",
-      "map": "Japan",
-      "gametype": "70",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8261.png"
+      settingid: '8261',
+      map: 'Japan',
+      gametype: '70',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8261.png',
     },
     {
-      "settingid": "8262",
-      "map": "Redacted",
-      "gametype": "70",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8262.png"
+      settingid: '8262',
+      map: 'Redacted',
+      gametype: '70',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8262.png',
     },
     {
-      "settingid": "8163",
-      "map": "Africa Advanced",
-      "gametype": "zombies",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8163.png"
+      settingid: '8163',
+      map: 'Africa Advanced',
+      gametype: 'zombies',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8163.png',
     },
     {
-      "settingid": "8274",
-      "map": "Las Vegas",
-      "gametype": "zombies",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8274.png"
+      settingid: '8274',
+      map: 'Las Vegas',
+      gametype: 'zombies',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8274.png',
     },
     {
-      "settingid": "8275",
-      "map": "Africa",
-      "gametype": "70",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8275.png"
+      settingid: '8275',
+      map: 'Africa',
+      gametype: '70',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8275.png',
     },
     {
-      "settingid": "8276",
-      "map": "Deutschland",
-      "gametype": "zombies",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8276.png"
+      settingid: '8276',
+      map: 'Deutschland',
+      gametype: 'zombies',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8276.png',
     },
     {
-      "settingid": "8277",
-      "map": "28 Turns Later",
-      "gametype": "zombies",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8277.png"
+      settingid: '8277',
+      map: '28 Turns Later',
+      gametype: 'zombies',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8277.png',
     },
     {
-      "settingid": "8278",
-      "map": "Greece",
-      "gametype": "70",
-      "cards": "fixed",
-      "link": "https://friendsofrisk.com/setting/8278.png"
+      settingid: '8278',
+      map: 'Greece',
+      gametype: '70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/8278.png',
     },
     {
-      "settingid": "7984",
-      "map": "The Younger Scrolls",
-      "gametype": "caps 70",
-      "cards": "fixed",
-      "link": "https://friendsofrisk.com/setting/7984.png"
-    }
+      settingid: '7984',
+      map: 'The Younger Scrolls',
+      gametype: 'caps 70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/7984.png',
+    },
   ],
   6: [
     {
-      "settingid": "8263",
-      "map": "Britannia Advanced",
-      "gametype": "WD",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8263.png"
+      settingid: '8263',
+      map: 'Britannia Advanced',
+      gametype: 'WD',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8263.png',
     },
     {
-      "settingid": "8264",
-      "map": "Canada Advanced",
-      "gametype": "70",
-      "cards": "fixed",
-      "link": "https://friendsofrisk.com/setting/8264.png"
+      settingid: '8264',
+      map: 'Canada Advanced',
+      gametype: '70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/8264.png',
     },
     {
-      "settingid": "8265",
-      "map": "Pangaea",
-      "gametype": "WD",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8265.png"
+      settingid: '8265',
+      map: 'Pangaea',
+      gametype: 'WD',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8265.png',
     },
     {
-      "settingid": "8266",
-      "map": "Mira HQ",
-      "gametype": "70",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8266.png"
+      settingid: '8266',
+      map: 'Mira HQ',
+      gametype: '70',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8266.png',
     },
     {
-      "settingid": "8279",
-      "map": "Brazil Advanced",
-      "gametype": "WD",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8279.png"
+      settingid: '8279',
+      map: 'Brazil Advanced',
+      gametype: 'WD',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8279.png',
     },
     {
-      "settingid": "8280",
-      "map": "Operation ADAM",
-      "gametype": "70",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8280.png"
+      settingid: '8280',
+      map: 'Operation ADAM',
+      gametype: '70',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8280.png',
     },
     {
-      "settingid": "8281",
-      "map": "Turkey",
-      "gametype": "70",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8281.png"
+      settingid: '8281',
+      map: 'Turkey',
+      gametype: '70',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8281.png',
     },
     {
-      "settingid": "8282",
-      "map": "Turkey",
-      "gametype": "WD",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8282.png"
+      settingid: '8282',
+      map: 'Turkey',
+      gametype: 'WD',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8282.png',
     },
     {
-      "settingid": "8283",
-      "map": "Deutschland",
-      "gametype": "WD",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8283.png"
+      settingid: '8283',
+      map: 'Deutschland',
+      gametype: 'WD',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8283.png',
     },
     {
-      "settingid": "8284",
-      "map": "Central America",
-      "gametype": "WD",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8284.png"
+      settingid: '8284',
+      map: 'Central America',
+      gametype: 'WD',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8284.png',
     },
     {
-      "settingid": "8285",
-      "map": "Las Vegas",
-      "gametype": "WD",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8285.png"
+      settingid: '8285',
+      map: 'Las Vegas',
+      gametype: 'WD',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8285.png',
     },
     {
-      "settingid": "8286",
-      "map": "Mont St Michel",
-      "gametype": "70",
-      "cards": "fixed",
-      "link": "https://friendsofrisk.com/setting/8286.png"
+      settingid: '8286',
+      map: 'Mont St Michel',
+      gametype: '70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/8286.png',
     },
     {
-      "settingid": "8287",
-      "map": "Africa Advanced",
-      "gametype": "WD",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8287.png"
+      settingid: '8287',
+      map: 'Africa Advanced',
+      gametype: 'WD',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8287.png',
     },
     {
-      "settingid": "8292",
-      "map": "US Midwest",
-      "gametype": "WD",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8292.png"
+      settingid: '8292',
+      map: 'US Midwest',
+      gametype: 'WD',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8292.png',
     },
     {
-      "settingid": "8293",
-      "map": "River Town Advanced",
-      "gametype": "70",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8293.png"
+      settingid: '8293',
+      map: 'River Town Advanced',
+      gametype: '70',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8293.png',
     },
     {
-      "settingid": "8294",
-      "map": "US West",
-      "gametype": "WD",
-      "cards": "prog",
-      "link": "https://friendsofrisk.com/setting/8294.png"
+      settingid: '8294',
+      map: 'US West',
+      gametype: 'WD',
+      cards: 'prog',
+      link: 'https://friendsofrisk.com/setting/8294.png',
     },
   ],
 }
