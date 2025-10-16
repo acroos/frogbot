@@ -1,13 +1,9 @@
 import { SendMessageWithContent } from '../utils/discord.js'
 import { FriendsOfRiskRequest } from '../utils/friends-of-risk.js'
 import { GetGame, RemoveAllPlayersInGame, SetGame } from '../utils/redis.js'
+import { VOTE_VALUES, NOT_PLAYED_VOTE_THRESHOLD, REQUIRED_VOTES_BY_PLAYER_COUNT } from '../constants.js'
 
 export default async function WinnerSelection(gameId, playerId, winnerId) {
-  const requiredVotesMap = {
-    4: 3,
-    5: 3,
-    6: 4,
-  }
   let game = await GetGame(gameId)
 
   if (game.winner) {
@@ -19,15 +15,15 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
   game = await SetGame(gameId, game)
 
   const voteCount = Object.keys(game.winnerVotes).length
-  const requiredVotes = requiredVotesMap[game.playerCount]
+  const requiredVotes = REQUIRED_VOTES_BY_PLAYER_COUNT[game.playerCount]
 
   // Count "not played" votes
   const notPlayedVotes = Object.values(game.winnerVotes).filter(
-    (vote) => vote === 'not_played'
+    (vote) => vote === VOTE_VALUES.NOT_PLAYED
   ).length
 
   // If multiple players voted "not played", end the game without a winner
-  if (notPlayedVotes >= 2) {
+  if (notPlayedVotes >= NOT_PLAYED_VOTE_THRESHOLD) {
     await Promise.all([
       SendMessageWithContent(
         gameId,
@@ -43,7 +39,7 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
 
     // Filter out "not played" votes when determining winner
     const playerVotes = Object.values(game.winnerVotes).filter(
-      (vote) => vote !== 'not_played'
+      (vote) => vote !== VOTE_VALUES.NOT_PLAYED
     )
     const winner = determineWinner(playerVotes, requiredVotes)
 
@@ -55,7 +51,7 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
         )
           .map(
             ([voter, winner]) =>
-              `- Voter: <@${voter}> -> Winner: ${winner === 'not_played' ? 'Game not played' : `<@${winner}>`}`
+              `- Voter: <@${voter}> -> Winner: ${winner === VOTE_VALUES.NOT_PLAYED ? 'Game not played' : `<@${winner}>`}`
           )
           .join('\n')}`
       )

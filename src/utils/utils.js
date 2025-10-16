@@ -5,6 +5,7 @@ import {
   SendMessageWithComponents,
 } from './discord.js'
 import { FetchPlayerInfo } from './friends-of-risk.js'
+import { VOTE_VALUES } from '../constants.js'
 import {
   GetFinalizedGames,
   MapToAllGames,
@@ -189,7 +190,7 @@ async function sendStartGameMessage(game, selectedSettings) {
             })),
             {
               label: 'Game was not played',
-              value: 'not_played',
+              value: VOTE_VALUES.NOT_PLAYED,
             },
           ],
         },

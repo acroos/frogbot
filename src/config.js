@@ -23,4 +23,43 @@ const CONFIG = {
   redisUseTLS: process.env.REDIS_USE_TLS || false
 }
 
+/**
+ * Validates that all required configuration values are present
+ * @throws {Error} If any required config is missing or has default placeholder values
+ */
+function validateConfig() {
+  const requiredFields = [
+    { key: 'appId', envVar: 'APP_ID' },
+    { key: 'publicKey', envVar: 'PUBLIC_KEY' },
+    { key: 'discordToken', envVar: 'DISCORD_TOKEN' },
+    { key: 'friendsOfRiskApiKey', envVar: 'FRIENDS_OF_RISK_API_KEY' },
+  ]
+
+  const errors = []
+
+  for (const field of requiredFields) {
+    const value = CONFIG[field.key]
+    
+    // Check if value is missing or is a placeholder
+    if (!value || value.startsWith('your-')) {
+      errors.push(`${field.envVar} is not set or is using a placeholder value`)
+    }
+  }
+
+  if (errors.length > 0) {
+    const errorMessage = [
+      'Configuration validation failed:',
+      ...errors.map(err => `  - ${err}`),
+      '\nPlease set the required environment variables before starting the application.',
+    ].join('\n')
+    
+    throw new Error(errorMessage)
+  }
+
+  console.log('✓ Configuration validated successfully')
+}
+
+// Validate configuration on module load
+validateConfig()
+
 export default CONFIG

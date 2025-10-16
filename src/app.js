@@ -13,6 +13,7 @@ import LeaveGame, { LeaveGameError } from './commands/leave-game.js'
 import SettingsPollSelectionMade from './commands/settings-poll-selection.js'
 import WinnerSelection from './commands/winner-selection.js'
 import CONFIG from './config.js'
+import { VOTE_VALUES } from './constants.js'
 import {
   ReadDiscordCommandOptionFromData,
   ReadGuildIdFromContext,
@@ -70,37 +71,34 @@ async function handleCreateGameCommand(req, res) {
 
 async function handleJoinGameButton(req, res, customId) {
   const guildId = ReadGuildIdFromContext(req.body)
-  // Extract playerId from context
   const playerId = ReadPlayerIdFromContext(req.body)
-  // Extract game ID from custom_id
   const gameId = customId.split('_')[2]
 
-  // Call the JoinGame function with playerId and game
-  return JoinGame(guildId, playerId, gameId)
-    .then(() =>
-      res.send({
+  try {
+    await JoinGame(guildId, playerId, gameId)
+    
+    return res.send({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        flags: InteractionResponseFlags.EPHEMERAL,
+        content: `You have joined the game: <#${gameId}>.`,
+      },
+    })
+  } catch (error) {
+    if (error instanceof JoinGameError) {
+      console.error(`JoinGameError: ${error.message}`)
+
+      return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
           flags: InteractionResponseFlags.EPHEMERAL,
-          content: `You have joined the game: <#${gameId}>.`,
+          content: error.message,
         },
       })
-    )
-    .catch((error) => {
-      if (error instanceof JoinGameError) {
-        console.error(`JoinGameError: ${error.message}`)
-
-        return res.send({
-          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-          data: {
-            flags: InteractionResponseFlags.EPHEMERAL,
-            content: error.message,
-          },
-        })
-      } else {
-        throw error // Re-throw unexpected errors
-      }
-    })
+    } else {
+      throw error // Re-throw unexpected errors
+    }
+  }
 }
 
 async function handleLeaveGameButton(req, res, customId) {
@@ -108,31 +106,31 @@ async function handleLeaveGameButton(req, res, customId) {
   const playerId = ReadPlayerIdFromContext(req.body)
   const gameId = customId.split('_')[2]
 
-  return LeaveGame(guildId, playerId, gameId)
-    .then(() => {
-      res.send({
+  try {
+    await LeaveGame(guildId, playerId, gameId)
+    
+    return res.send({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        flags: InteractionResponseFlags.EPHEMERAL,
+        content: `You have left the game: ${gameId}.`,
+      },
+    })
+  } catch (error) {
+    if (error instanceof LeaveGameError) {
+      console.error(`LeaveGameError: ${error.message}`)
+
+      return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
           flags: InteractionResponseFlags.EPHEMERAL,
-          content: `You have left the game: ${gameId}.`,
+          content: error.message,
         },
       })
-    })
-    .catch((error) => {
-      if (error instanceof LeaveGameError) {
-        console.error(`LeaveGameError: ${error.message}`)
-
-        return res.send({
-          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-          data: {
-            flags: InteractionResponseFlags.EPHEMERAL,
-            content: error.message,
-          },
-        })
-      } else {
-        throw error // Re-throw unexpected errors
-      }
-    })
+    } else {
+      throw error // Re-throw unexpected errors
+    }
+  }
 }
 
 async function handleSettingsPollSelection(req, res, customId) {
@@ -177,7 +175,7 @@ async function handleWinnerPollSelection(req, res, customId) {
   const selectionAccepted = await WinnerSelection(threadId, playerId, winnerId)
 
   if (selectionAccepted) {
-    const responseContent = winnerId === 'not_played' 
+    const responseContent = winnerId === VOTE_VALUES.NOT_PLAYED
       ? 'Your vote that the game was not played has been counted'
       : `Your selection of <@${winnerId}> as winner has been counted`
 
@@ -189,7 +187,7 @@ async function handleWinnerPollSelection(req, res, customId) {
       },
     })
   } else {
-    const errorContent = winnerId === 'not_played'
+    const errorContent = winnerId === VOTE_VALUES.NOT_PLAYED
       ? 'Your vote that the game was not played could not be counted. Please try again.'
       : `Your selection of <@${winnerId}> as winner could not be counted.  Please try again.`
 
@@ -204,12 +202,13 @@ async function handleWinnerPollSelection(req, res, customId) {
 }
 
 async function handleFinishGameButton(req, res, customId) {
-  // Extract game ID from custom_id
   const gameId = customId.split('_')[2]
 
-  return FinishGame(gameId).then((result) => {
+  try {
+    const result = await FinishGame(gameId)
+    
     if (result) {
-      res.send({
+      return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
           flags: InteractionResponseFlags.EPHEMERAL,
@@ -217,7 +216,7 @@ async function handleFinishGameButton(req, res, customId) {
         },
       })
     } else {
-      res.send({
+      return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
           flags: InteractionResponseFlags.EPHEMERAL,
@@ -225,18 +224,33 @@ async function handleFinishGameButton(req, res, customId) {
         },
       })
     }
-  })
+  } catch (error) {
+    console.error(`Error finishing game ${gameId}:`, error)
+    throw error
+  }
 }
 
 export default async function CreateApp() {
-  cron.schedule('*/2 * * * *', () => {
-    FinalizeGames()
-    CloseSettingsSelection()
+  cron.schedule('*/2 * * * *', async () => {
+    try {
+      await Promise.all([
+        FinalizeGames(),
+        CloseSettingsSelection()
+      ])
+    } catch (error) {
+      console.error('Error in finalize/settings cron job:', error)
+    }
   })
 
-  cron.schedule('*/10 * * * *', () => {
-    CleanUpFinalizedGames()
-    CleanUpOldGames()
+  cron.schedule('*/10 * * * *', async () => {
+    try {
+      await Promise.all([
+        CleanUpFinalizedGames(),
+        CleanUpOldGames()
+      ])
+    } catch (error) {
+      console.error('Error in cleanup cron job:', error)
+    }
   })
 
   // cron.schedule('0 * * * *', () => {

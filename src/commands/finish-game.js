@@ -1,7 +1,8 @@
-import { MessageComponentTypes } from 'discord-interactions'
-import { SendMessageWithComponents } from '../utils/discord.js'
-import { GetGame, SetGame } from '../utils/redis.js'
-import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
+import { MessageComponentTypes } from "discord-interactions"
+import { SendMessageWithComponents } from "../utils/discord.js"
+import { GetGame, SetGame } from "../utils/redis.js"
+import { FetchPlayerInfo } from "../utils/friends-of-risk.js"
+import { VOTE_VALUES } from "../constants.js"
 
 export default async function FinishGame(gameId) {
   let game = await GetGame(gameId)
@@ -35,8 +36,8 @@ export default async function FinishGame(gameId) {
               value: player.discordid,
             })),
             {
-              label: 'Game was not played',
-              value: 'not_played',
+              label: "Game was not played",
+              value: VOTE_VALUES.NOT_PLAYED,
             },
           ],
         },
