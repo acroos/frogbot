@@ -31,40 +31,53 @@ export class JoinGameError extends Error {
  */
 export default async function JoinGame(guildId, playerId, gameId) {
   // Fetch the game from Redis
-  let game = await GetGame(gameId)
+  const game = await GetGame(gameId)
   if (!game) {
     throw new JoinGameError(`Game with ID ${gameId} not found.`)
   }
 
-  // Validate player is allowed to join game
-  game = await validateJoinGameConditions(game, playerId)
+  // Validate player is allowed to join game (may fetch player info if needed)
+  await validateJoinGameConditions(game, playerId)
 
-  // Add the player to the game thread
-  await AddPlayerToThread(gameId, playerId)
+  // Add player to thread and mark as in game (parallel execution)
+  await Promise.all([
+    AddPlayerToThread(gameId, playerId),
+    SetPlayerInGame(playerId, gameId),
+  ])
 
-  // Set player as in game
-  await SetPlayerInGame(playerId, gameId)
-
-  game.players.push(playerId) // Add player to the game
-  game = await SetGame(gameId, game) // Update the game in Redis
+  // Add player to the game and update in Redis
+  game.players.push(playerId)
+  await SetGame(gameId, game)
 
   if (game.playerCount === game.players.length) {
-    // Send the initial message in the game thread with settings options
+    // Game is now full - send messages and update state in parallel
     await Promise.all([
-      sendLobbyFullMessage(gameId),
-      updatePingMessage(guildId, gameId),
-      updateGameFilled(gameId),
+      sendLobbyFullMessage(game),
+      updatePingMessage(guildId, game),
+      updateGameFilled(gameId, game),
     ])
   } else {
-    await sendWelcomeMessage(gameId, playerId)
+    await sendWelcomeMessage(game, playerId)
   }
 
   return game
 }
 
+/**
+ * Validates that a player can join the game
+ * @param {Object} game - The game object
+ * @param {string} playerId - The player ID
+ * @returns {Promise<void>}
+ * @throws {JoinGameError} If player cannot join
+ */
 async function validateJoinGameConditions(game, playerId) {
   const gameId = game.gameThreadId
-  const playerAlreadyInGame = await GetPlayerInGame(playerId)
+
+  // Run independent validations in parallel
+  const [playerAlreadyInGame, playerInfo] = await Promise.all([
+    GetPlayerInGame(playerId),
+    game.eloRequirement > 0 ? FetchPlayerInfo(playerId) : Promise.resolve(null),
+  ])
 
   // Validate if player is already in a game
   if (playerAlreadyInGame) {
@@ -78,8 +91,7 @@ async function validateJoinGameConditions(game, playerId) {
 
   // Validate player's ELO if required
   if (game.eloRequirement > 0) {
-    const data = await FetchPlayerInfo(playerId)
-    const playerElo = data?.ffa_elo_score || 0
+    const playerElo = playerInfo?.ffa_elo_score || 0
 
     if (playerElo < game.eloRequirement) {
       throw new JoinGameError(
@@ -87,12 +99,14 @@ async function validateJoinGameConditions(game, playerId) {
       )
     }
   }
-
-  return game
 }
 
-async function sendLobbyFullMessage(gameId) {
-  const game = await GetGame(gameId)
+/**
+ * Sends the lobby full message with settings poll
+ * @param {Object} game - The game object
+ * @returns {Promise<void>}
+ */
+async function sendLobbyFullMessage(game) {
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
@@ -123,11 +137,16 @@ async function sendLobbyFullMessage(gameId) {
       ],
     },
   ]
-  await SendMessageWithComponents(gameId, components)
+  await SendMessageWithComponents(game.gameThreadId, components)
 }
 
-async function updatePingMessage(guildId, gameId) {
-  const game = await GetGame(gameId)
+/**
+ * Updates the ping message to indicate game is full
+ * @param {string} guildId - The guild ID
+ * @param {Object} game - The game object
+ * @returns {Promise<void>}
+ */
+async function updatePingMessage(guildId, game) {
 
   const components = [
     {
@@ -143,18 +162,27 @@ async function updatePingMessage(guildId, gameId) {
   )
 }
 
-async function sendWelcomeMessage(gameId, playerId) {
-  const game = await GetGame(gameId)
-
+/**
+ * Sends a welcome message to a player joining the game
+ * @param {Object} game - The game object
+ * @param {string} playerId - The player ID
+ * @returns {Promise<void>}
+ */
+async function sendWelcomeMessage(game, playerId) {
   const currentPlayerCount = game.players.length
 
   const message = `Welcome to the game <@${playerId}>!\n\nHang tight for a few minutes while we wait for a full lobby.  We currently have ${currentPlayerCount} players here, we need ${game.playerCount} to start.`
 
-  await SendMessageWithContent(gameId, message)
+  await SendMessageWithContent(game.gameThreadId, message)
 }
 
-async function updateGameFilled(gameId) {
-  const game = await GetGame(gameId)
+/**
+ * Updates game state to mark when it was filled
+ * @param {string} gameId - The game thread ID
+ * @param {Object} game - The game object
+ * @returns {Promise<Object>} The updated game object
+ */
+async function updateGameFilled(gameId, game) {
   game.filledAt = Date.now()
   return await SetGame(gameId, game)
 }

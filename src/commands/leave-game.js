@@ -31,7 +31,7 @@ export class LeaveGameError extends Error {
 // - If last player leaves game, cancel game
 export default async function LeaveGame(guildId, playerId, gameId) {
   // Fetch the game from Redis
-  let game = await GetGame(gameId)
+  const game = await GetGame(gameId)
   if (!game) {
     throw new LeaveGameError(`Could not find game with ID ${gameId}`)
   }
@@ -40,27 +40,32 @@ export default async function LeaveGame(guildId, playerId, gameId) {
     throw new LeaveGameError('Cannot leave a game after it has started')
   }
 
+  // Remove player from game and their settings vote
   game.players = game.players.filter((player) => player !== playerId)
   delete game.settingsVotes[playerId]
 
-  game = await SetGame(gameId, game)
-
-  if (!game) {
+  // Save updated game state
+  const savedGame = await SetGame(gameId, game)
+  if (!savedGame) {
     throw new LeaveGameError('Could not leave game')
   }
 
-  const results = await Promise.all([
+  // Execute all cleanup operations in parallel
+  await Promise.all([
     RemovePlayerInGame(playerId),
     RemovePlayerFromThread(gameId, playerId),
-    updateGamePingMessage(guildId, gameId),
-    cancelGameIfEmpty(guildId, gameId),
+    updateGamePingMessage(guildId, game),
+    cancelGameIfEmpty(guildId, game),
   ])
-
-  return results
 }
 
-async function updateGamePingMessage(guildId, gameId) {
-  const game = await GetGame(gameId)
+/**
+ * Updates the ping message in the lounge channel after player leaves
+ * @param {string} guildId - The Discord guild ID
+ * @param {Object} game - The game object
+ * @returns {Promise<Object>} The updated message response
+ */
+async function updateGamePingMessage(guildId, game) {
   const { gameThreadId, creatorId, playerCount, eloRequirement, voiceChat } =
     game
 
@@ -88,8 +93,13 @@ async function updateGamePingMessage(guildId, gameId) {
   )
 }
 
-async function cancelGameIfEmpty(guildId, gameId) {
-  const game = await GetGame(gameId)
+/**
+ * Cancels the game if no players remain
+ * @param {string} guildId - The Discord guild ID
+ * @param {Object} game - The game object
+ * @returns {Promise<void>}
+ */
+async function cancelGameIfEmpty(guildId, game) {
   const { players, pingMessageId, gameThreadId } = game
   if (players.length === 0) {
     await Promise.all([

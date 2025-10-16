@@ -5,13 +5,6 @@ import {
   SendMessageWithContent,
 } from '../utils/discord.js'
 
-class SettingsAlreadyFinalizedError extends Error {
-  constructor(message) {
-    super(message)
-    this.name = 'SettingsAlreadyFinalizedError'
-  }
-}
-
 /**
  * Handles a player's vote for game settings
  * @param {string} threadId - The Discord thread ID of the game
@@ -24,75 +17,63 @@ export default async function SettingsPollSelectionMade(
   playerId,
   selectionId
 ) {
+  // Fetch game once at the start
+  const game = await GetGame(gameId)
+  
   // Validate that the game is not already finalized
-  try {
-    await validateGameNotAlreadyFinalized(gameId)
-  } catch (error) {
-    if (error instanceof SettingsAlreadyFinalizedError) {
-      return false
-    }
-    throw error
+  const votes = Object.values(game.settingsVotes)
+  if (votes.length === game.playerCount) {
+    return false
   }
 
-  await addSettingsVoteToGame(gameId, playerId, selectionId).then(async () => {
-    const game = await maybeFinalizeVote(gameId)
-    if (game) {
-      const finalizedSettings = game.settingsOptions.find(
-        (option) => option.settingid === game.selectedSettingId
-      )
-      console.log(`Finalized settings: ${JSON.stringify(finalizedSettings)}`)
-      await sendStartGameMessage(gameId, finalizedSettings)
-    } else {
-      await pingRemainingVotes(gameId)
-    }
-  })
+  // Add the vote to the game
+  const settingsChoice = game.settingsOptions.find(
+    (option) => option.settingid === selectionId
+  )
+  game.settingsVotes[playerId] = settingsChoice
+  await SetGame(gameId, game)
+
+  // Check if we should finalize
+  const updatedVotes = Object.values(game.settingsVotes)
+  if (updatedVotes.length === game.playerCount) {
+    // Finalize settings - randomly select from votes
+    const selectedSettings = updatedVotes[Math.floor(Math.random() * updatedVotes.length)]
+    game.selectedSettingId = selectedSettings.settingid
+    await SetGame(gameId, game)
+    
+    console.log(`Finalized settings: ${JSON.stringify(selectedSettings)}`)
+    await sendStartGameMessage(game, selectedSettings)
+  } else {
+    await pingRemainingVotes(game)
+  }
 
   return true
 }
 
-async function validateGameNotAlreadyFinalized(gameId) {
-  const game = await GetGame(gameId)
-  const votes = Object.values(game.settingsVotes)
-  if (votes.length === game.playerCount) {
-    throw new SettingsAlreadyFinalizedError()
-  }
-}
-
-async function addSettingsVoteToGame(gameId, playerId, selectedSettingId) {
-  const game = await GetGame(gameId)
-  const settingsChoice = game.settingsOptions.find(
-    (option) => option.settingid === selectedSettingId
-  )
-  game.settingsVotes[playerId] = settingsChoice
-  return await SetGame(gameId, game) // Update the game in Redis
-}
-
-async function maybeFinalizeVote(gameId) {
-  let game = await GetGame(gameId)
-  const votes = Object.values(game.settingsVotes)
-  if (votes.length === game.playerCount) {
-    const selectedSettings = votes[Math.floor(Math.random() * votes.length)]
-    game.selectedSettingId = selectedSettings.settingid
-    return SetGame(gameId, game)
-  }
-  return null
-}
-
-async function pingRemainingVotes(gameId) {
-  const game = await GetGame(gameId)
+/**
+ * Pings players who haven't voted yet
+ * @param {Object} game - The game object
+ * @returns {Promise<void>}
+ */
+async function pingRemainingVotes(game) {
   const alreadyVoted = Object.keys(game.settingsVotes)
   const remainingVoters = game.players.filter(
     (playerId) => !alreadyVoted.includes(playerId)
   )
 
   await SendMessageWithContent(
-    gameId,
+    game.gameThreadId,
     `${remainingVoters.map((voterId) => `<@${voterId}> `)}\nDon't forget to vote for your preferred settings with the selection menu above!`
   )
 }
 
-async function sendStartGameMessage(gameId, selectedSettings) {
-  const game = await GetGame(gameId)
+/**
+ * Sends the game start message with finalized settings
+ * @param {Object} game - The game object
+ * @param {Object} selectedSettings - The selected settings
+ * @returns {Promise<Object>} The sent message response
+ */
+async function sendStartGameMessage(game, selectedSettings) {
 
   const components = [
     {
@@ -127,5 +108,5 @@ async function sendStartGameMessage(gameId, selectedSettings) {
     },
   ]
 
-  return await SendMessageWithComponents(gameId, components)
+  return await SendMessageWithComponents(game.gameThreadId, components)
 }

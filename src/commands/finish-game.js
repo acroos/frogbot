@@ -10,17 +10,21 @@ import { VOTE_VALUES } from "../constants.js"
  * @returns {Promise<boolean>} True if game was successfully finished, false if already finished
  */
 export default async function FinishGame(gameId) {
-  let game = await GetGame(gameId)
+  const game = await GetGame(gameId)
+  
+  // Early return if game is already completed
   if (game.completedAt) {
     return false
   }
 
+  // Update game completion time
   game.completedAt = Date.now()
-  game = await SetGame(gameId, game)
 
-  const players = await Promise.all(
-    game.players.map((playerId) => FetchPlayerInfo(playerId))
-  )
+  // Fetch player info and save game state in parallel
+  const [players] = await Promise.all([
+    Promise.all(game.players.map((playerId) => FetchPlayerInfo(playerId))),
+    SetGame(gameId, game),
+  ])
 
   const components = [
     {

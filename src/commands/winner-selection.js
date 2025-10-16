@@ -11,15 +11,14 @@ import { VOTE_VALUES, NOT_PLAYED_VOTE_THRESHOLD, REQUIRED_VOTES_BY_PLAYER_COUNT 
  * @returns {Promise<boolean>} True if vote was accepted, false if game already has a winner
  */
 export default async function WinnerSelection(gameId, playerId, winnerId) {
-  let game = await GetGame(gameId)
+  const game = await GetGame(gameId)
 
   if (game.winner) {
     return false
   }
 
   game.winnerVotes[playerId] = winnerId
-
-  game = await SetGame(gameId, game)
+  await SetGame(gameId, game)
 
   const voteCount = Object.keys(game.winnerVotes).length
   const requiredVotes = REQUIRED_VOTES_BY_PLAYER_COUNT[game.playerCount]
@@ -72,10 +71,12 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
       if (!response.ok) {
         return false
       }
+      
       game.winner = winner
-      game = await SetGame(gameId, game)
-
+      
+      // Save winner and notify in parallel
       await Promise.all([
+        SetGame(gameId, game),
         SendMessageWithContent(
           gameId,
           `Congratulations to the winner <@${winner}>!  The game has been stored on FriendsOfRisk, you should see the results live shortly.`
@@ -84,25 +85,35 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
       ])
     }
   } else {
-    await pingRemainingVotes(gameId)
+    await pingRemainingVotes(game)
   }
 
   return true
 }
 
-async function pingRemainingVotes(gameId) {
-  const game = await GetGame(gameId)
+/**
+ * Pings players who haven't voted yet for winner
+ * @param {Object} game - The game object
+ * @returns {Promise<void>}
+ */
+async function pingRemainingVotes(game) {
   const alreadyVoted = Object.keys(game.winnerVotes)
   const remainingVoters = game.players.filter(
     (playerId) => !alreadyVoted.includes(playerId)
   )
 
   await SendMessageWithContent(
-    gameId,
+    game.gameThreadId,
     `${remainingVoters.map((voterId) => `<@${voterId}> `)}\nDon't forget to vote for the winner with the selection menu above!`
   )
 }
 
+/**
+ * Determines the winner from votes based on required vote count
+ * @param {Array<string>} votes - Array of player IDs that received votes
+ * @param {number} requiredToWinCount - Number of votes required to win
+ * @returns {string|null} The winner's player ID or null if no winner
+ */
 function determineWinner(votes, requiredToWinCount) {
   let voteCounts = {}
   for (let vote of votes) {
@@ -115,6 +126,14 @@ function determineWinner(votes, requiredToWinCount) {
   return null
 }
 
+/**
+ * Submits game results to Friends of Risk API
+ * @param {string} gameId - The game thread ID
+ * @param {string} settingsId - The settings ID used for the game
+ * @param {Array<string>} playerIds - Array of player IDs
+ * @param {string} winnerId - The winner's player ID
+ * @returns {Promise<Response>} The API response
+ */
 async function addGameToFriendsOfRisk(gameId, settingsId, playerIds, winnerId) {
   const body = {
     messageid: gameId,

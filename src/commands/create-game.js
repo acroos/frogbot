@@ -51,15 +51,17 @@ export default async function CreateGame(
   // Validate arguments
   validateArguments(playerCount, eloRequirement, voiceChat)
 
-  // Validate player is not already in game
-  const creatorCurrentGame = await GetPlayerInGame(creatorId)
+  // Validate player is not already in game and fetch player info (parallel)
+  const [creatorCurrentGame, creatorPlayerInfo] = await Promise.all([
+    GetPlayerInGame(creatorId),
+    FetchPlayerInfo(creatorId),
+  ])
+
   if (creatorCurrentGame) {
     throw new CreateGameError(
       `Player ${creatorId} is already in game ${creatorCurrentGame}`
     )
   }
-
-  const creatorPlayerInfo = await FetchPlayerInfo(creatorId)
 
   // Validate creator's ELO
   validateCreatorElo(creatorPlayerInfo, eloRequirement)
@@ -73,9 +75,10 @@ export default async function CreateGame(
     voiceChat
   )
 
-  const promiseResults = await Promise.all([
-    sendInitialMessage(gameThreadId, creatorId, playerCount), // Send the initial message in the thread
-    AddPlayerToThread(gameThreadId, creatorId), // Add the creator to the game thread
+  // Execute all setup tasks in parallel
+  const [, , pingMessage] = await Promise.all([
+    sendInitialMessage(gameThreadId, creatorId, playerCount),
+    AddPlayerToThread(gameThreadId, creatorId),
     sendPingMessageInChannel(
       guildId,
       gameThreadId,
@@ -83,15 +86,14 @@ export default async function CreateGame(
       playerCount,
       eloRequirement,
       voiceChat
-    ), // Send a ping message in the lounge channel to notify players
+    ),
     SetPlayerInGame(creatorId, gameThreadId),
   ])
 
-  const settingsOptions = GetRandomizedSettings(playerCount) // Fetch the settings players can vote on
+  // Fetch the settings players can vote on (synchronous operation)
+  const settingsOptions = GetRandomizedSettings(playerCount)
 
   console.log('Settings options for the game:', JSON.stringify(settingsOptions))
-
-  const pingMessage = promiseResults[2]
 
   const newGame = {
     gameThreadId: gameThreadId,
@@ -113,9 +115,16 @@ export default async function CreateGame(
 
   const savedGame = await SetGame(gameThreadId, newGame)
 
-  return savedGame // Save the game in Redis
+  return savedGame
 }
 
+/**
+ * Validates the game creation parameters
+ * @param {number} playerCount - Number of players
+ * @param {number} eloRequirement - ELO requirement
+ * @param {boolean} voiceChat - Voice chat setting
+ * @throws {Error} If any parameter is invalid
+ */
 function validateArguments(playerCount, eloRequirement, voiceChat) {
   if (playerCount < 4 || playerCount > 6) {
     throw new Error(
@@ -136,6 +145,12 @@ function validateArguments(playerCount, eloRequirement, voiceChat) {
   }
 }
 
+/**
+ * Validates that the creator meets the ELO requirement
+ * @param {Object} creatorData - Creator's player info
+ * @param {number} requiredElo - Minimum ELO requirement
+ * @throws {EloRequirementNotMetError} If creator's ELO is below requirement
+ */
 function validateCreatorElo(creatorData, requiredElo) {
   if (requiredElo <= 0) return
 
@@ -146,6 +161,16 @@ function validateCreatorElo(creatorData, requiredElo) {
   }
 }
 
+/**
+ * Creates a Discord thread for the game
+ * @param {string} guildId - Guild ID
+ * @param {string} creatorName - Name of the game creator
+ * @param {number} playerCount - Number of players
+ * @param {number} eloRequirement - ELO requirement
+ * @param {boolean} voiceChat - Voice chat requirement
+ * @returns {Promise<string>} The created thread ID
+ * @throws {Error} If thread creation fails
+ */
 async function createGameThread(
   guildId,
   creatorName,
@@ -155,7 +180,7 @@ async function createGameThread(
 ) {
   console.log(`Creating game thread in guild: ${guildId}`)
   console.log(`Using lounge channel ID: ${CONFIG.loungeChannelId[guildId]}`)
-  // /channels/{channel.id}/threads
+
   const result = await DiscordRequest(
     `channels/${CONFIG.loungeChannelId[guildId]}/threads`,
     {
@@ -167,15 +192,25 @@ async function createGameThread(
       },
     }
   )
+
   if (!result.ok) {
     throw new Error(`Failed to create game thread: ${result.statusText}`)
   }
 
   const newThreadJson = await result.json()
-  // Return the thread ID for further use
   return newThreadJson.id
 }
 
+/**
+ * Sends the ping message in the lounge channel to notify players
+ * @param {string} guildId - Guild ID
+ * @param {string} gameThreadId - Game thread ID
+ * @param {string} creatorId - Creator user ID
+ * @param {number} playerCount - Number of players
+ * @param {number} eloRequirement - ELO requirement
+ * @param {boolean} voiceChat - Voice chat requirement
+ * @returns {Promise<Object>} The sent message object
+ */
 async function sendPingMessageInChannel(
   guildId,
   gameThreadId,
@@ -207,6 +242,13 @@ async function sendPingMessageInChannel(
   )
 }
 
+/**
+ * Sends the initial message in the game thread
+ * @param {string} gameId - Game thread ID
+ * @param {string} creatorId - Creator user ID
+ * @param {number} playerCount - Number of players
+ * @returns {Promise<void>}
+ */
 async function sendInitialMessage(gameId, creatorId, playerCount) {
   const components = [
     {
