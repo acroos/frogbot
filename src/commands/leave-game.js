@@ -19,6 +19,14 @@ export class LeaveGameError extends Error {
   }
 }
 
+/**
+ * Removes a player from a game they previously joined
+ * @param {string} guildId - The Discord guild ID
+ * @param {string} playerId - The Discord user ID of the player leaving
+ * @param {string} gameId - The Discord thread ID of the game to leave
+ * @returns {Promise<void>}
+ * @throws {LeaveGameError} If player cannot leave (not in game, game not found, etc.)
+ */
 // TODO:
 // - If last player leaves game, cancel game
 export default async function LeaveGame(guildId, playerId, gameId) {

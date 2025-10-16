@@ -4,6 +4,11 @@ import { GetGame, SetGame } from "../utils/redis.js"
 import { FetchPlayerInfo } from "../utils/friends-of-risk.js"
 import { VOTE_VALUES } from "../constants.js"
 
+/**
+ * Marks a game as completed and sends winner selection poll
+ * @param {string} gameId - The Discord thread ID of the game to finish
+ * @returns {Promise<boolean>} True if game was successfully finished, false if already finished
+ */
 export default async function FinishGame(gameId) {
   let game = await GetGame(gameId)
   if (game.completedAt) {

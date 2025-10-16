@@ -3,6 +3,13 @@ import { FriendsOfRiskRequest } from '../utils/friends-of-risk.js'
 import { GetGame, RemoveAllPlayersInGame, SetGame } from '../utils/redis.js'
 import { VOTE_VALUES, NOT_PLAYED_VOTE_THRESHOLD, REQUIRED_VOTES_BY_PLAYER_COUNT } from '../constants.js'
 
+/**
+ * Handles a player's winner selection vote
+ * @param {string} gameId - The Discord thread ID of the game
+ * @param {string} playerId - The Discord user ID of the voting player
+ * @param {string} winnerId - The Discord user ID of the winner or VOTE_VALUES.NOT_PLAYED
+ * @returns {Promise<boolean>} True if vote was accepted, false if game already has a winner
+ */
 export default async function WinnerSelection(gameId, playerId, winnerId) {
   let game = await GetGame(gameId)
 

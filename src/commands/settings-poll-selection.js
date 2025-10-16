@@ -12,6 +12,13 @@ class SettingsAlreadyFinalizedError extends Error {
   }
 }
 
+/**
+ * Handles a player's vote for game settings
+ * @param {string} threadId - The Discord thread ID of the game
+ * @param {string} playerId - The Discord user ID of the voting player
+ * @param {string} selectedSettingId - The ID of the selected setting
+ * @returns {Promise<boolean>} True if vote was counted, false if settings already finalized
+ */
 export default async function SettingsPollSelectionMade(
   gameId,
   playerId,

@@ -21,6 +21,14 @@ export class JoinGameError extends Error {
   }
 }
 
+/**
+ * Adds a player to an existing game
+ * @param {string} guildId - The Discord guild ID
+ * @param {string} playerId - The Discord user ID of the player joining
+ * @param {string} gameId - The Discord thread ID of the game to join
+ * @returns {Promise<void>}
+ * @throws {JoinGameError} If player cannot join (already in game, game full, ELO requirement not met, etc.)
+ */
 export default async function JoinGame(guildId, playerId, gameId) {
   // Fetch the game from Redis
   let game = await GetGame(gameId)

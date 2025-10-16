@@ -29,3 +29,26 @@ export const REQUIRED_VOTES_BY_PLAYER_COUNT = {
   5: 3,
   6: 4,
 }
+
+/**
+ * Timing configurations for game lifecycle (in milliseconds)
+ */
+export const TIMING = {
+  THREAD_OPEN_TIME: 180000,       // 3 minutes - Time before thread is locked after completion
+  SETTINGS_SELECTION_TIME: 300000, // 5 minutes - Time allowed for players to vote on settings
+  OLD_GAME_THRESHOLD: 14400000,    // 4 hours - Games older than this are cleaned up
+}
+
+/**
+ * Redis time-to-live for cached data (in seconds)
+ */
+export const REDIS_TTL = 7200 // 2 hours
+
+/**
+ * Default game creation values
+ */
+export const GAME_DEFAULTS = {
+  PLAYER_COUNT: 4,
+  ELO_REQUIREMENT: 0,
+  VOICE_CHAT: false,
+}

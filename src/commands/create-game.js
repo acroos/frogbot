@@ -1,5 +1,6 @@
 import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
 import CONFIG from '../config.js'
+import { GAME_DEFAULTS } from '../constants.js'
 import {
   AddPlayerToThread,
   DiscordRequest,
@@ -25,10 +26,16 @@ class EloRequirementNotMetError extends CreateGameError {
   }
 }
 
-const DEFAULT_PLAYER_COUNT = 4 // Default player count
-const DEFAULT_ELO_REQUIREMENT = 0 // Default ELO requirement
-const DEFAULT_VOICE_CHAT = false // Default voice chat setting
-
+/**
+ * Creates a new game with the specified parameters
+ * @param {string} guildId - The Discord guild ID where the game is being created
+ * @param {string} creatorId - The Discord user ID of the game creator
+ * @param {number|null} playerCount - Number of players (4-6), defaults to GAME_DEFAULTS.PLAYER_COUNT
+ * @param {number|null} eloRequirement - Minimum ELO required to join, defaults to GAME_DEFAULTS.ELO_REQUIREMENT
+ * @param {boolean|null} voiceChat - Whether voice chat is required, defaults to GAME_DEFAULTS.VOICE_CHAT
+ * @returns {Promise<Object>} The created game object
+ * @throws {CreateGameError} If game creation fails due to validation or other errors
+ */
 export default async function CreateGame(
   guildId,
   creatorId,
@@ -37,9 +44,9 @@ export default async function CreateGame(
   voiceChat = null
 ) {
   // Use default values if not provided
-  playerCount = playerCount || DEFAULT_PLAYER_COUNT
-  eloRequirement = eloRequirement || DEFAULT_ELO_REQUIREMENT
-  voiceChat = voiceChat || DEFAULT_VOICE_CHAT
+  playerCount = playerCount || GAME_DEFAULTS.PLAYER_COUNT
+  eloRequirement = eloRequirement || GAME_DEFAULTS.ELO_REQUIREMENT
+  voiceChat = voiceChat || GAME_DEFAULTS.VOICE_CHAT
 
   // Validate arguments
   validateArguments(playerCount, eloRequirement, voiceChat)

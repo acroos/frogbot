@@ -20,6 +20,11 @@ import {
   ReadPlayerIdFromContext,
 } from './utils/discord.js'
 import {
+  sendEphemeralSuccess,
+  sendEphemeralError,
+  sendPong,
+} from './utils/responses.js'
+import {
   CleanUpFinalizedGames,
   CleanUpOldGames,
   CloseSettingsSelection,
@@ -46,23 +51,14 @@ async function handleCreateGameCommand(req, res) {
       voiceChat
     )
 
-    return res.send({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        flags: InteractionResponseFlags.EPHEMERAL,
-        content: `Game created successfully! Game ID: ${game.gameThreadId}`,
-      },
-    })
+    return sendEphemeralSuccess(
+      res,
+      `Game created successfully! Game ID: ${game.gameThreadId}`
+    )
   } catch (error) {
     if (error instanceof CreateGameError) {
       console.error('Error creating game:', error)
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          flags: InteractionResponseFlags.EPHEMERAL,
-          content: error.message,
-        },
-      })
+      return sendEphemeralError(res, error.message)
     } else {
       throw error // Re-throw unexpected errors
     }
@@ -77,24 +73,11 @@ async function handleJoinGameButton(req, res, customId) {
   try {
     await JoinGame(guildId, playerId, gameId)
     
-    return res.send({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        flags: InteractionResponseFlags.EPHEMERAL,
-        content: `You have joined the game: <#${gameId}>.`,
-      },
-    })
+    return sendEphemeralSuccess(res, `You have joined the game: <#${gameId}>.`)
   } catch (error) {
     if (error instanceof JoinGameError) {
       console.error(`JoinGameError: ${error.message}`)
-
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          flags: InteractionResponseFlags.EPHEMERAL,
-          content: error.message,
-        },
-      })
+      return sendEphemeralError(res, error.message)
     } else {
       throw error // Re-throw unexpected errors
     }
@@ -109,24 +92,11 @@ async function handleLeaveGameButton(req, res, customId) {
   try {
     await LeaveGame(guildId, playerId, gameId)
     
-    return res.send({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        flags: InteractionResponseFlags.EPHEMERAL,
-        content: `You have left the game: ${gameId}.`,
-      },
-    })
+    return sendEphemeralSuccess(res, `You have left the game: ${gameId}.`)
   } catch (error) {
     if (error instanceof LeaveGameError) {
       console.error(`LeaveGameError: ${error.message}`)
-
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          flags: InteractionResponseFlags.EPHEMERAL,
-          content: error.message,
-        },
-      })
+      return sendEphemeralError(res, error.message)
     } else {
       throw error // Re-throw unexpected errors
     }
@@ -147,21 +117,15 @@ async function handleSettingsPollSelection(req, res, customId) {
   )
 
   if (voteCounted) {
-    return res.send({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        flags: InteractionResponseFlags.EPHEMERAL,
-        content: `You have selected settings #${selectedSettingId} for the game.`,
-      },
-    })
+    return sendEphemeralSuccess(
+      res,
+      `You have selected settings #${selectedSettingId} for the game.`
+    )
   } else {
-    return res.send({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        flags: InteractionResponseFlags.EPHEMERAL,
-        content: `Settings have already been finalized for this game. No further votes can be cast.`,
-      },
-    })
+    return sendEphemeralError(
+      res,
+      `Settings have already been finalized for this game. No further votes can be cast.`
+    )
   }
 }
 
@@ -179,25 +143,13 @@ async function handleWinnerPollSelection(req, res, customId) {
       ? 'Your vote that the game was not played has been counted'
       : `Your selection of <@${winnerId}> as winner has been counted`
 
-    return res.send({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        flags: InteractionResponseFlags.EPHEMERAL,
-        content: responseContent,
-      },
-    })
+    return sendEphemeralSuccess(res, responseContent)
   } else {
     const errorContent = winnerId === VOTE_VALUES.NOT_PLAYED
       ? 'Your vote that the game was not played could not be counted. Please try again.'
       : `Your selection of <@${winnerId}> as winner could not be counted.  Please try again.`
 
-    return res.send({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        flags: InteractionResponseFlags.EPHEMERAL,
-        content: errorContent,
-      },
-    })
+    return sendEphemeralError(res, errorContent)
   }
 }
 
@@ -208,21 +160,9 @@ async function handleFinishGameButton(req, res, customId) {
     const result = await FinishGame(gameId)
     
     if (result) {
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          flags: InteractionResponseFlags.EPHEMERAL,
-          content: `Game <#${gameId}> has been finished`,
-        },
-      })
+      return sendEphemeralSuccess(res, `Game <#${gameId}> has been finished`)
     } else {
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          flags: InteractionResponseFlags.EPHEMERAL,
-          content: `Game <#${gameId}> is already finished`,
-        },
-      })
+      return sendEphemeralError(res, `Game <#${gameId}> is already finished`)
     }
   } catch (error) {
     console.error(`Error finishing game ${gameId}:`, error)
@@ -281,7 +221,7 @@ export default async function CreateApp() {
        * Handle verification requests
        */
       if (type === InteractionType.PING) {
-        return res.send({ type: InteractionResponseType.PONG })
+        return sendPong(res)
       }
 
       /**

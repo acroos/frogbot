@@ -1,5 +1,6 @@
 import { createClient } from 'redis'
 import CONFIG from '../config.js'
+import { REDIS_TTL } from '../constants.js'
 
 const FINALIZED_GAMES_KEY = 'finalized-games'
 
@@ -13,6 +14,11 @@ const redisClient = await createClient({
   .on('error', (err) => console.log('Redis Client Error', err))
   .connect()
 
+/**
+ * Retrieves a game from Redis by game ID
+ * @param {string} gameId - The Discord thread ID of the game
+ * @returns {Promise<Object|null>} The game object or null if not found
+ */
 export async function GetGame(gameId) {
   const key = gameIdToRedisKey(gameId)
   try {
@@ -27,13 +33,19 @@ export async function GetGame(gameId) {
   }
 }
 
+/**
+ * Stores or updates a game in Redis with TTL
+ * @param {string} gameId - The Discord thread ID of the game
+ * @param {Object} game - The game object to store
+ * @returns {Promise<Object|null>} The game object or null on error
+ */
 export async function SetGame(gameId, game) {
   try {
     await redisClient.SETEX(
       gameIdToRedisKey(gameId),
-      7200,
+      REDIS_TTL,
       JSON.stringify(game)
-    ) // Set with 2 hour expiration
+    )
   } catch (error) {
     console.error('Error setting value in Redis:', error)
     return null
@@ -41,6 +53,11 @@ export async function SetGame(gameId, game) {
   return game
 }
 
+/**
+ * Removes a game from Redis
+ * @param {string} gameId - The Discord thread ID of the game to remove
+ * @returns {Promise<void>}
+ */
 export async function RemoveGame(gameId) {
   try {
     await redisClient.del(gameIdToRedisKey(gameId))
@@ -62,18 +79,40 @@ export async function SetFinalizedGames(gameIds) {
   }
 }
 
+/**
+ * Gets the game ID that a player is currently in
+ * @param {string} playerId - The Discord user ID
+ * @returns {Promise<string|null>} The game ID or null if player not in a game
+ */
 export async function GetPlayerInGame(playerId) {
   return await redisClient.get(playerIdToActiveGameId(playerId))
 }
 
+/**
+ * Records that a player is in a specific game
+ * @param {string} playerId - The Discord user ID
+ * @param {string} gameId - The Discord thread ID of the game
+ * @returns {Promise<void>}
+ */
 export async function SetPlayerInGame(playerId, gameId) {
-  await redisClient.SETEX(playerIdToActiveGameId(playerId), 7200, gameId) // Set with 2 hour expiration
+  await redisClient.SETEX(playerIdToActiveGameId(playerId), REDIS_TTL, gameId)
 }
 
+/**
+ * Removes the record of a player being in a game
+ * @param {string} playerId - The Discord user ID
+ * @returns {Promise<void>}
+ */
 export async function RemovePlayerInGame(playerId) {
   await redisClient.del(playerIdToActiveGameId(playerId))
 }
 
+/**
+ * Removes all players from a game's active game records
+ * @param {string} gameId - The Discord thread ID of the game
+ * @returns {Promise<void>}
+ * @throws {Error} If game is not found
+ */
 export async function RemoveAllPlayersInGame(gameId) {
   const game = await GetGame(gameId)
   if (!game) {

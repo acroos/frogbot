@@ -5,7 +5,7 @@ import {
   SendMessageWithComponents,
 } from './discord.js'
 import { FetchPlayerInfo } from './friends-of-risk.js'
-import { VOTE_VALUES } from '../constants.js'
+import { VOTE_VALUES, TIMING } from '../constants.js'
 import {
   GetFinalizedGames,
   MapToAllGames,
@@ -15,10 +15,11 @@ import {
   SetGame,
 } from './redis.js'
 
-const THREAD_OPEN_TIME = 180000 // 3 minutes in ms
-const SETTINGS_SELECTION_TIME = 300000 // 5 minutes in ms
-const OLD_GAME_THRESHOLD = 14400000 // 4 hours in ms
-
+/**
+ * Finalizes completed games by locking their threads
+ * Runs periodically via cron job
+ * @returns {Promise<void>}
+ */
 export function FinalizeGames() {
   const startTime = Date.now()
 
@@ -41,6 +42,11 @@ export function FinalizeGames() {
     })
 }
 
+/**
+ * Cleans up finalized games by closing threads and removing from Redis
+ * Runs periodically via cron job
+ * @returns {Promise<void>}
+ */
 export function CleanUpFinalizedGames() {
   console.log(`Starting finalized game cleanup at ${new Date().toUTCString()}`)
   GetFinalizedGames()
@@ -69,13 +75,18 @@ export function CleanUpFinalizedGames() {
     )
 }
 
+/**
+ * Cleans up old games that exceed the OLD_GAME_THRESHOLD
+ * Runs periodically via cron job
+ * @returns {Promise<void>}
+ */
 export function CleanUpOldGames() {
   const startTime = Date.now()
   console.log(`Starting old game cleanup at ${new Date().toUTCString()}`)
 
   MapToAllGames(async (game) => {
     console.log(`Time since created: ${startTime - game.createdAt}`)
-    if (startTime - game.createdAt > OLD_GAME_THRESHOLD) {
+    if (startTime - game.createdAt > TIMING.OLD_GAME_THRESHOLD) {
       CloseThread(game.gameThreadId)
         .then(async () => {
           await RemoveAllPlayersInGame(game.gameThreadId).then(async () => {
@@ -91,6 +102,12 @@ export function CleanUpOldGames() {
   )
 }
 
+/**
+ * Closes settings selection for filled games after the selection time has elapsed
+ * Randomly selects settings if not enough votes
+ * Runs periodically via cron job
+ * @returns {Promise<void>}
+ */
 export function CloseSettingsSelection() {
   const startTime = Date.now()
   MapToAllGames(async (game) => {
@@ -103,7 +120,7 @@ export function CloseSettingsSelection() {
       return
     }
     // Not enough time has passed
-    if (startTime - game.filledAt < SETTINGS_SELECTION_TIME) {
+    if (startTime - game.filledAt < TIMING.SETTINGS_SELECTION_TIME) {
       return
     }
     console.log(`Closing settings selection for game: ${game.gameThreadId}`)
@@ -124,6 +141,12 @@ export function CloseSettingsSelection() {
   })
 }
 
+/**
+ * Gets 3 randomized settings for the specified player count
+ * @param {number} playerCount - Number of players (4, 5, or 6)
+ * @returns {Array<Object>} Array of 3 random setting objects
+ * @throws {Error} If player count is invalid
+ */
 export function GetRandomizedSettings(playerCount) {
   const settingsForPlayerCount = SETTINGS_BY_PLAYER_COUNT[playerCount]
   if (!settingsForPlayerCount) {
@@ -147,7 +170,7 @@ function gameShouldFinalize(startTime, completionTime) {
     return false
   }
 
-  return startTime - completionTime > THREAD_OPEN_TIME
+  return startTime - completionTime > TIMING.THREAD_OPEN_TIME
 }
 
 async function sendStartGameMessage(game, selectedSettings) {
