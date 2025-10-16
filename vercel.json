@@ -1,0 +1,15 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/finalize",
+      "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "*/10 * * * *"
+    }
+  ],
+  "env": {
+    "PORT": "3000"
+  }
+}
