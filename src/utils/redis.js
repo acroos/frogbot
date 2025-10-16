@@ -3,20 +3,38 @@ import CONFIG from '../config.js'
 
 const FINALIZED_GAMES_KEY = 'finalized-games'
 
-const redisClient = await createClient({
-  socket: {
-    host: CONFIG.redisHost,
-    tls: true,
-    rejectUnauthorized: false,
-  },
-})
-  .on('error', (err) => console.log('Redis Client Error', err))
-  .connect()
+let redisClient = null
+let connectingPromise = null
+
+async function getRedisClient() {
+  if (redisClient && redisClient.isOpen) {
+    return redisClient
+  }
+  
+  if (connectingPromise) {
+    return connectingPromise
+  }
+  
+  connectingPromise = createClient({
+    socket: {
+      host: CONFIG.redisHost,
+      tls: CONFIG.redisUseTLS,
+      rejectUnauthorized: false,
+    },
+  })
+    .on('error', (err) => console.log('Redis Client Error', err))
+    .connect()
+  
+  redisClient = await connectingPromise
+  connectingPromise = null
+  return redisClient
+}
 
 export async function GetGame(gameId) {
+  const client = await getRedisClient()
   const key = gameIdToRedisKey(gameId)
   try {
-    const value = await redisClient.get(key)
+    const value = await client.get(key)
     if (!value) {
       console.error(`Could not find game for key: ${key}`)
     }
@@ -28,8 +46,9 @@ export async function GetGame(gameId) {
 }
 
 export async function SetGame(gameId, game) {
+  const client = await getRedisClient()
   try {
-    await redisClient.SETEX(
+    await client.SETEX(
       gameIdToRedisKey(gameId),
       7200,
       JSON.stringify(game)
@@ -42,36 +61,42 @@ export async function SetGame(gameId, game) {
 }
 
 export async function RemoveGame(gameId) {
+  const client = await getRedisClient()
   try {
-    await redisClient.del(gameIdToRedisKey(gameId))
+    await client.del(gameIdToRedisKey(gameId))
   } catch (error) {
     console.error('Error removing game', error)
   }
 }
 
 export async function GetFinalizedGames() {
-  const value = await redisClient.get(FINALIZED_GAMES_KEY)
+  const client = await getRedisClient()
+  const value = await client.get(FINALIZED_GAMES_KEY)
   return JSON.parse(value)
 }
 
 export async function SetFinalizedGames(gameIds) {
+  const client = await getRedisClient()
   try {
-    await redisClient.set(FINALIZED_GAMES_KEY, JSON.stringify(gameIds))
+    await client.set(FINALIZED_GAMES_KEY, JSON.stringify(gameIds))
   } catch (error) {
     console.error('Error setting finalized games', error)
   }
 }
 
 export async function GetPlayerInGame(playerId) {
-  return await redisClient.get(playerIdToActiveGameId(playerId))
+  const client = await getRedisClient()
+  return await client.get(playerIdToActiveGameId(playerId))
 }
 
 export async function SetPlayerInGame(playerId, gameId) {
-  await redisClient.SETEX(playerIdToActiveGameId(playerId), 7200, gameId) // Set with 2 hour expiration
+  const client = await getRedisClient()
+  await client.SETEX(playerIdToActiveGameId(playerId), 7200, gameId) // Set with 2 hour expiration
 }
 
 export async function RemovePlayerInGame(playerId) {
-  await redisClient.del(playerIdToActiveGameId(playerId))
+  const client = await getRedisClient()
+  await client.del(playerIdToActiveGameId(playerId))
 }
 
 export async function RemoveAllPlayersInGame(gameId) {
@@ -85,9 +110,10 @@ export async function RemoveAllPlayersInGame(gameId) {
 }
 
 export async function ScanMap(mapFunc) {
-  for await (const keys of redisClient.scanIterator()) {
+  const client = await getRedisClient()
+  for await (const keys of client.scanIterator()) {
     for (const key of keys) {
-      const value = await redisClient.get(key)
+      const value = await client.get(key)
       const parsed = JSON.parse(value)
 
       mapFunc(parsed)
@@ -96,9 +122,10 @@ export async function ScanMap(mapFunc) {
 }
 
 export async function MapToAllGames(mapFunc) {
-  for await (const keys of redisClient.scanIterator({ MATCH: 'game-*' })) {
+  const client = await getRedisClient()
+  for await (const keys of client.scanIterator({ MATCH: 'game-*' })) {
     for (const key of keys) {
-      const value = await redisClient.get(key)
+      const value = await client.get(key)
       const parsed = JSON.parse(value)
 
       mapFunc(parsed)

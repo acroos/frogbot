@@ -15,22 +15,27 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "register": "node src/commands.js",
-    "dev": "nodemon src/server.js",
-    "format": "prettier --write src/**/*.{js,json,md}",
-    "lint": "eslint src/**/*.js"
+    "format": "prettier --write src/**/*.{js,json,md} app/**/*.{js,jsx,ts,tsx}",
+    "lint": "next lint"
   },
   "dependencies": {
     "discord-interactions": "^4.3.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "next": "^15.5.5",
     "node-cron": "^4.2.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "redis": "^5.7.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "eslint": "^9.34.0",
+    "eslint-config-next": "^15.5.5",
     "globals": "^16.3.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2"
