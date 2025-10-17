@@ -32,7 +32,6 @@ class EloRequirementNotMetError extends CreateGameError {
  * @param {string} creatorId - The Discord user ID of the game creator
  * @param {number|null} playerCount - Number of players (4-6), defaults to GAME_DEFAULTS.PLAYER_COUNT
  * @param {number|null} eloRequirement - Minimum ELO required to join, defaults to GAME_DEFAULTS.ELO_REQUIREMENT
- * @param {boolean|null} voiceChat - Whether voice chat is required, defaults to GAME_DEFAULTS.VOICE_CHAT
  * @returns {Promise<Object>} The created game object
  * @throws {CreateGameError} If game creation fails due to validation or other errors
  */
@@ -40,16 +39,14 @@ export default async function CreateGame(
   guildId,
   creatorId,
   playerCount = null,
-  eloRequirement = null,
-  voiceChat = null
+  eloRequirement = null
 ) {
   // Use default values if not provided
   playerCount = playerCount || GAME_DEFAULTS.PLAYER_COUNT
   eloRequirement = eloRequirement || GAME_DEFAULTS.ELO_REQUIREMENT
-  voiceChat = voiceChat || GAME_DEFAULTS.VOICE_CHAT
 
   // Validate arguments
-  validateArguments(playerCount, eloRequirement, voiceChat)
+  validateArguments(playerCount, eloRequirement)
 
   // Validate player is not already in game and fetch player info (parallel)
   const [creatorCurrentGame, creatorPlayerInfo] = await Promise.all([

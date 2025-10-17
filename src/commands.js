@@ -36,12 +36,6 @@ const CREATE_GAME_COMMAND = {
         { name: 'No Restrictions', value: 0 },
       ],
     },
-    {
-      type: 5,
-      name: 'voice_chat',
-      description: 'Include voice chat in the game',
-      required: false,
-    },
   ],
 }
 

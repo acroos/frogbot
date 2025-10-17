@@ -50,5 +50,4 @@ export const REDIS_TTL = 7200 // 2 hours
 export const GAME_DEFAULTS = {
   PLAYER_COUNT: 4,
   ELO_REQUIREMENT: 0,
-  VOICE_CHAT: false,
 }

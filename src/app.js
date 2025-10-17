@@ -40,15 +40,13 @@ async function handleCreateGameCommand(req, res) {
     data,
     'elo_requirement'
   )
-  const voiceChat = ReadDiscordCommandOptionFromData(data, 'voice_chat')
 
   try {
     const game = await CreateGame(
       guildId,
       creatorId,
       playerCount,
-      eloRequirement,
-      voiceChat
+      eloRequirement
     )
 
     return sendEphemeralSuccess(
@@ -192,10 +190,6 @@ export default async function CreateApp() {
       console.error('Error in cleanup cron job:', error)
     }
   })
-
-  // cron.schedule('0 * * * *', () => {
-  //   CleanUpOldGames()
-  // })
 
   // Create an express app
   const app = express()
