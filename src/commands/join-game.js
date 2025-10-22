@@ -90,7 +90,7 @@ async function validateJoinGameConditions(game, playerId) {
   }
 
   // Validate player's ELO if required
-  if (game.eloRequirement > 0) {
+  if (game.eloRequirement != 0) {
     const playerElo = playerInfo?.ffa_elo_score || 0
 
     if (playerElo < game.eloRequirement) {
