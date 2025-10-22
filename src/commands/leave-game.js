@@ -66,13 +66,12 @@ export default async function LeaveGame(guildId, playerId, gameId) {
  * @returns {Promise<Object>} The updated message response
  */
 async function updateGamePingMessage(guildId, game) {
-  const { gameThreadId, creatorId, playerCount, eloRequirement, voiceChat } =
-    game
+  const { gameThreadId, creatorId, playerCount, eloRequirement } = game
 
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
-      content: `Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n- Voice Chat: ${voiceChat ? 'Enabled' : 'Disabled'}\n\nUse the button below to join the game!`,
+      content: `Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n\nUse the button below to join the game!`,
     },
     {
       type: MessageComponentTypes.ACTION_ROW,

@@ -127,7 +127,7 @@ async function sendLobbyFullMessage(game) {
       components: [
         {
           type: MessageComponentTypes.STRING_SELECT,
-          custom_id: `settings_poll_${gameId}`,
+          custom_id: `settings_poll_${game.gameThreadId}`,
           placeholder: 'Vote for your preferred settings',
           options: game.settingsOptions.map((settingsOption) => ({
             label: `${settingsOption.map} ${settingsOption.cards} ${settingsOption.gametype} [#${settingsOption.settingid}]`,
@@ -151,7 +151,7 @@ async function updatePingMessage(guildId, game) {
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
-      content: `Risk Competitive Lounge game created by <@${game.creatorId}>!\n- Player Count: ${game.playerCount}\n- ELO Requirement: ${game.eloRequirement}\n- Voice Chat: ${game.voiceChat ? 'Enabled' : 'Disabled'}\n\nGame has filled, keep an eye out for the next one or start your own with the \`/create_game\` command`,
+      content: `Risk Competitive Lounge game created by <@${game.creatorId}>!\n- Player Count: ${game.playerCount}\n- ELO Requirement: ${game.eloRequirement}\n\nGame has filled, keep an eye out for the next one or start your own with the \`/create_game\` command`,
     },
   ]
 

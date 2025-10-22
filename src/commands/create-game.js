@@ -45,46 +45,61 @@ export default async function CreateGame(
   playerCount = playerCount || GAME_DEFAULTS.PLAYER_COUNT
   eloRequirement = eloRequirement || GAME_DEFAULTS.ELO_REQUIREMENT
 
-  // Validate arguments
+    // Validate arguments
   validateArguments(playerCount, eloRequirement)
 
-  // Validate player is not already in game and fetch player info (parallel)
-  const [creatorCurrentGame, creatorPlayerInfo] = await Promise.all([
-    GetPlayerInGame(creatorId),
+  // Parallel operations: Check if player is already in a game and fetch player info
+  const [existingGame, playerInfo] = await Promise.all([
+    GetPlayerInGame(guildId, creatorId),
     FetchPlayerInfo(creatorId),
   ])
 
-  if (creatorCurrentGame) {
+  // Check if player is already in a game
+  if (existingGame) {
     throw new CreateGameError(
-      `Player ${creatorId} is already in game ${creatorCurrentGame}`
+      'You are already in a game! Please leave it first before creating a new one.'
     )
   }
 
-  // Validate creator's ELO
-  validateCreatorElo(creatorPlayerInfo, eloRequirement)
+  // Validate player has Friends of Risk account
+  const playerFoRProfile = playerInfo.profile
+  if (playerFoRProfile === null) {
+    throw new CreateGameError(
+      'You need to link your account with Friends of Risk to create a game. Please visit https://friendsofrisk.com to get started.'
+    )
+  }
 
-  // Create the game thread
+  // Validate player meets ELO requirement
+  const playerElo = playerFoRProfile.elo
+  if (playerElo < eloRequirement) {
+    throw new CreateGameError(
+      `Your ELO (${playerElo}) does not meet the minimum requirement (${eloRequirement}) to create this game!`
+    )
+  }
+
+  // Get creator's display name for thread creation
+  const creatorName = playerInfo.username || 'Player'
+
+  // Create the game thread first
   const gameThreadId = await createGameThread(
     guildId,
-    creatorPlayerInfo.name,
+    creatorName,
     playerCount,
-    eloRequirement,
-    voiceChat
+    eloRequirement
   )
 
-  // Execute all setup tasks in parallel
-  const [, , pingMessage] = await Promise.all([
-    sendInitialMessage(gameThreadId, creatorId, playerCount),
-    AddPlayerToThread(gameThreadId, creatorId),
+  // Now create ping message and send initial message in parallel
+  const [pingMessage] = await Promise.all([
     sendPingMessageInChannel(
       guildId,
       gameThreadId,
       creatorId,
       playerCount,
-      eloRequirement,
-      voiceChat
+      eloRequirement
     ),
-    SetPlayerInGame(creatorId, gameThreadId),
+    sendInitialMessage(gameThreadId, creatorId, playerCount),
+    AddPlayerToThread(gameThreadId, creatorId),
+    SetPlayerInGame(guildId, creatorId, gameThreadId),
   ])
 
   // Fetch the settings players can vote on (synchronous operation)
@@ -98,7 +113,6 @@ export default async function CreateGame(
     settingsOptions: settingsOptions,
     playerCount: playerCount,
     eloRequirement: eloRequirement,
-    voiceChat: voiceChat,
     players: [creatorId],
     selectedSettingId: undefined,
     settingsVotes: {},
@@ -119,10 +133,9 @@ export default async function CreateGame(
  * Validates the game creation parameters
  * @param {number} playerCount - Number of players
  * @param {number} eloRequirement - ELO requirement
- * @param {boolean} voiceChat - Voice chat setting
  * @throws {Error} If any parameter is invalid
  */
-function validateArguments(playerCount, eloRequirement, voiceChat) {
+function validateArguments(playerCount, eloRequirement) {
   if (playerCount < 4 || playerCount > 6) {
     throw new Error(
       `Invalid player count: ${playerCount}. Must be between 4 and 6.`
@@ -132,12 +145,6 @@ function validateArguments(playerCount, eloRequirement, voiceChat) {
   if (typeof eloRequirement !== 'number') {
     throw new Error(
       `Invalid ELO requirement: ${eloRequirement}. Must be a number.`
-    )
-  }
-
-  if (typeof voiceChat !== 'boolean') {
-    throw new Error(
-      `Invalid voice chat setting: ${voiceChat}. Must be a boolean.`
     )
   }
 }
@@ -164,7 +171,6 @@ function validateCreatorElo(creatorData, requiredElo) {
  * @param {string} creatorName - Name of the game creator
  * @param {number} playerCount - Number of players
  * @param {number} eloRequirement - ELO requirement
- * @param {boolean} voiceChat - Voice chat requirement
  * @returns {Promise<string>} The created thread ID
  * @throws {Error} If thread creation fails
  */
@@ -172,8 +178,7 @@ async function createGameThread(
   guildId,
   creatorName,
   playerCount,
-  eloRequirement,
-  voiceChat
+  eloRequirement
 ) {
   console.log(`Creating game thread in guild: ${guildId}`)
   console.log(`Using lounge channel ID: ${CONFIG.loungeChannelId[guildId]}`)
@@ -183,7 +188,7 @@ async function createGameThread(
     {
       method: 'POST',
       body: {
-        name: `${creatorName}'s Lounge Game - Players: ${playerCount}, ELO: ${eloRequirement}, Voice: ${voiceChat ? 'Yes' : 'No'}`,
+        name: `${creatorName}'s Lounge Game - Players: ${playerCount}, ELO: ${eloRequirement}`,
         type: 12, // Private thread
         invitable: false, // Players cannot invite others
       },
@@ -205,7 +210,6 @@ async function createGameThread(
  * @param {string} creatorId - Creator user ID
  * @param {number} playerCount - Number of players
  * @param {number} eloRequirement - ELO requirement
- * @param {boolean} voiceChat - Voice chat requirement
  * @returns {Promise<Object>} The sent message object
  */
 async function sendPingMessageInChannel(
@@ -213,13 +217,12 @@ async function sendPingMessageInChannel(
   gameThreadId,
   creatorId,
   playerCount,
-  eloRequirement,
-  voiceChat
+  eloRequirement
 ) {
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
-      content: `<@&${CONFIG.loungeRoleId[guildId]}> New Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n- Voice Chat: ${voiceChat ? 'Enabled' : 'Disabled'}\n\nUse the button below to join the game!`,
+      content: `<@&${CONFIG.loungeRoleId[guildId]}> New Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n\nUse the button below to join the game!`,
     },
     {
       type: MessageComponentTypes.ACTION_ROW,
