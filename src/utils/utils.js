@@ -28,14 +28,13 @@ export function FinalizeGames() {
     if (gameShouldFinalize(startTime, game.completedAt)) {
       const response = await LockThread(game.gameThreadId)
       if (!response.ok) {
-        console.log(`Could not lock game thread: ${game.gameThreadId}`)
+        console.error(`Could not lock game thread: ${game.gameThreadId}`)
       }
       finalizedGames.push(game.gameThreadId)
     }
   })
     .then(async () => {
       await SetFinalizedGames(finalizedGames)
-      console.log('Finalized games!')
     })
     .catch((error) => {
       console.error('Error finalizing games: ', error)
@@ -51,7 +50,6 @@ export function CleanUpFinalizedGames() {
   console.log(`Starting finalized game cleanup at ${new Date().toUTCString()}`)
   GetFinalizedGames()
     .then((gameIds) => {
-      console.log(`Finalized games: ${JSON.stringify(gameIds)}`)
       if (!gameIds) {
         return
       }
@@ -59,7 +57,6 @@ export function CleanUpFinalizedGames() {
       for (let gameId of gameIds) {
         CloseThread(gameId)
           .then(async () => {
-            console.log(`Closed thread: ${gameId}`)
             await RemoveGame(gameId)
             await RemoveAllPlayersInGame(gameId)
           })
@@ -68,11 +65,6 @@ export function CleanUpFinalizedGames() {
           })
       }
     })
-    .then(() =>
-      console.log(
-        `Finished finalized game cleanup at ${new Date().toUTCString()}`
-      )
-    )
 }
 
 /**
@@ -82,10 +74,7 @@ export function CleanUpFinalizedGames() {
  */
 export function CleanUpOldGames() {
   const startTime = Date.now()
-  console.log(`Starting old game cleanup at ${new Date().toUTCString()}`)
-
   MapToAllGames(async (game) => {
-    console.log(`Time since created: ${startTime - game.createdAt}`)
     if (startTime - game.createdAt > TIMING.OLD_GAME_THRESHOLD) {
       CloseThread(game.gameThreadId)
         .then(async () => {
@@ -97,9 +86,7 @@ export function CleanUpOldGames() {
           console.error('Error cleaning up old games: ', error)
         })
     }
-  }).then(() =>
-    console.log(`Finished old game cleanup at ${new Date().toUTCString()}`)
-  )
+  })
 }
 
 /**
