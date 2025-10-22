@@ -61,19 +61,11 @@ export default async function CreateGame(
     )
   }
 
-  // Validate player has Friends of Risk account
-  const playerFoRProfile = playerInfo.profile
-  if (playerFoRProfile === null) {
-    throw new CreateGameError(
-      'You need to link your account with Friends of Risk to create a game. Please visit https://friendsofrisk.com to get started.'
-    )
-  }
-
   // Validate player meets ELO requirement
-  const playerElo = playerFoRProfile.elo
-  if (playerElo < eloRequirement) {
+  const playerElo = playerInfo?.elo
+  if (playerElo === undefined || playerElo < eloRequirement) {
     throw new CreateGameError(
-      `Your ELO (${playerElo}) does not meet the minimum requirement (${eloRequirement}) to create this game!`
+      `Your ELO (${playerElo || 0}) does not meet the minimum requirement (${eloRequirement}) to create this game!`
     )
   }
 
