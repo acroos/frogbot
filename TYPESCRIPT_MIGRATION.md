@@ -49,11 +49,11 @@ When migrating a file from `.js` to `.ts`:
 
 ### Commands (Migrate Second)
 - [x] `src/commands/create-game.ts` ✅
-- [ ] `src/commands/join-game.js`
-- [ ] `src/commands/leave-game.js`
+- [x] `src/commands/join-game.ts` ✅
+- [x] `src/commands/leave-game.ts` ✅
 - [x] `src/commands/finish-game.ts` ✅
-- [ ] `src/commands/settings-poll-selection.js`
-- [ ] `src/commands/winner-selection.js`
+- [x] `src/commands/settings-poll-selection.ts` ✅
+- [x] `src/commands/winner-selection.ts` ✅
 
 ### Main Application (Migrate Last)
 - [ ] `src/commands.js` - Command registration

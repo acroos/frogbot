@@ -5,7 +5,7 @@ import {
   SendMessageWithContent,
   UpdateMessageWithComponents,
 } from '../utils/discord.js'
-import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
+import { FetchPlayerInfo } from '../utils/friends-of-risk.ts'
 import {
   GetGame,
   GetPlayerInGame,
@@ -13,9 +13,10 @@ import {
   SetPlayerInGame,
 } from '../utils/redis.js'
 import CONFIG from '../config.js'
+import type { Game } from '../types/game.ts'
 
 export class JoinGameError extends Error {
-  constructor(message, options) {
+  constructor(message: string, options?: ErrorOptions) {
     super(message, options)
     this.name = 'JoinGameError'
   }
@@ -23,18 +24,23 @@ export class JoinGameError extends Error {
 
 /**
  * Adds a player to an existing game
- * @param {string} guildId - The Discord guild ID
- * @param {string} playerId - The Discord user ID of the player joining
- * @param {string} gameId - The Discord thread ID of the game to join
- * @returns {Promise<void>}
+ * @param guildId - The Discord guild ID
+ * @param playerId - The Discord user ID of the player joining
+ * @param gameId - The Discord thread ID of the game to join
+ * @returns The updated game object
  * @throws {JoinGameError} If player cannot join (already in game, game full, ELO requirement not met, etc.)
  */
-export default async function JoinGame(guildId, playerId, gameId) {
+export default async function JoinGame(
+  guildId: string,
+  playerId: string,
+  gameId: string
+): Promise<Game> {
   // Fetch the game from Redis
-  const game = await GetGame(gameId)
-  if (!game) {
+  const gameData = await GetGame(gameId)
+  if (!gameData) {
     throw new JoinGameError(`Game with ID ${gameId} not found.`)
   }
+  const game = gameData as Game
 
   // Validate player is allowed to join game (may fetch player info if needed)
   await validateJoinGameConditions(game, playerId)
@@ -65,12 +71,14 @@ export default async function JoinGame(guildId, playerId, gameId) {
 
 /**
  * Validates that a player can join the game
- * @param {Object} game - The game object
- * @param {string} playerId - The player ID
- * @returns {Promise<void>}
+ * @param game - The game object
+ * @param playerId - The player ID
  * @throws {JoinGameError} If player cannot join
  */
-async function validateJoinGameConditions(game, playerId) {
+async function validateJoinGameConditions(
+  game: Game,
+  playerId: string
+): Promise<void> {
   const gameId = game.gameThreadId
 
   // Run independent validations in parallel
@@ -103,10 +111,9 @@ async function validateJoinGameConditions(game, playerId) {
 
 /**
  * Sends the lobby full message with settings poll
- * @param {Object} game - The game object
- * @returns {Promise<void>}
+ * @param game - The game object
  */
-async function sendLobbyFullMessage(game) {
+async function sendLobbyFullMessage(game: Game): Promise<void> {
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
@@ -142,11 +149,10 @@ async function sendLobbyFullMessage(game) {
 
 /**
  * Updates the ping message to indicate game is full
- * @param {string} guildId - The guild ID
- * @param {Object} game - The game object
- * @returns {Promise<void>}
+ * @param guildId - The guild ID
+ * @param game - The game object
  */
-async function updatePingMessage(guildId, game) {
+async function updatePingMessage(guildId: string, game: Game): Promise<void> {
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
@@ -155,7 +161,7 @@ async function updatePingMessage(guildId, game) {
   ]
 
   await UpdateMessageWithComponents(
-    CONFIG.loungeChannelId[guildId],
+    CONFIG.loungeChannelId[guildId as keyof typeof CONFIG.loungeChannelId],
     game.pingMessageId,
     components
   )
@@ -163,11 +169,10 @@ async function updatePingMessage(guildId, game) {
 
 /**
  * Sends a welcome message to a player joining the game
- * @param {Object} game - The game object
- * @param {string} playerId - The player ID
- * @returns {Promise<void>}
+ * @param game - The game object
+ * @param playerId - The player ID
  */
-async function sendWelcomeMessage(game, playerId) {
+async function sendWelcomeMessage(game: Game, playerId: string): Promise<void> {
   const currentPlayerCount = game.players.length
 
   const message = `Welcome to the game <@${playerId}>!\n\nHang tight for a few minutes while we wait for a full lobby.  We currently have ${currentPlayerCount} players here, we need ${game.playerCount} to start.`
@@ -177,11 +182,11 @@ async function sendWelcomeMessage(game, playerId) {
 
 /**
  * Updates game state to mark when it was filled
- * @param {string} gameId - The game thread ID
- * @param {Object} game - The game object
- * @returns {Promise<Object>} The updated game object
+ * @param gameId - The game thread ID
+ * @param game - The game object
+ * @returns The updated game object
  */
-async function updateGameFilled(gameId, game) {
+async function updateGameFilled(gameId: string, game: Game): Promise<object | null> {
   game.filledAt = Date.now()
   return await SetGame(gameId, game)
 }
