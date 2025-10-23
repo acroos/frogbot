@@ -144,7 +144,10 @@ async function addGameToFriendsOfRisk(gameId, settingsId, playerIds, winnerId) {
     settingsid: settingsId,
   }
 
-  playerIds.forEach((playerId, i) => {
+  // Put winner first, then remaining players
+  const orderedPlayers = [winnerId, ...playerIds.filter(id => id !== winnerId)]
+
+  orderedPlayers.forEach((playerId, i) => {
     const playerNumber = i + 1
     body[`player${playerNumber}`] = playerId
     body[`player${playerNumber}score`] = playerId === winnerId ? 1 : 0
