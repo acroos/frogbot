@@ -1,6 +1,6 @@
-import { SendMessageWithContent } from '../utils/discord.js'
+import { SendMessageWithContent } from '../utils/discord.ts'
 import { FriendsOfRiskRequest } from '../utils/friends-of-risk.ts'
-import { GetGame, RemoveAllPlayersInGame, SetGame } from '../utils/redis.js'
+import { GetGame, RemoveAllPlayersInGame, SetGame } from '../utils/redis.ts'
 import {
   VOTE_VALUES,
   NOT_PLAYED_VOTE_THRESHOLD,

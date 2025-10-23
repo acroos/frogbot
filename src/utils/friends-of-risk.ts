@@ -2,7 +2,7 @@ import CONFIG from '../config.js'
 import type {
   FriendsOfRiskPlayerInfo,
   FriendsOfRiskRequestOptions,
-} from '../types/friends-of-risk.js'
+} from '../types/friends-of-risk.ts'
 
 /**
  * Fetches player information from Friends of Risk API

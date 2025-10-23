@@ -38,14 +38,12 @@ When migrating a file from `.js` to `.ts`:
 
 ## Files to Migrate
 
-### Utilities (Migrate First)
-- [ ] `src/constants.js` - Simple constants, good starting point
-- [ ] `src/config.js` - Configuration with validation
-- [ ] `src/utils/responses.js` - Helper functions for Discord responses
-- [ ] `src/utils/utils.js` - Utility functions
-- [ ] `src/utils/redis.js` - Redis database operations
-- [ ] `src/utils/discord.js` - Discord API utilities
-- [x] `src/utils/friends-of-risk.ts` - External API integration ✅
+### Utils (Migrate Third)
+- [x] `src/utils/friends-of-risk.ts` ✅
+- [x] `src/utils/discord.ts` ✅
+- [x] `src/utils/redis.ts` ✅
+- [x] `src/utils/responses.ts` ✅
+- [x] `src/utils/utils.ts` ✅
 
 ### Commands (Migrate Second)
 - [x] `src/commands/create-game.ts` ✅

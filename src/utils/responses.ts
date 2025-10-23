@@ -2,14 +2,15 @@ import {
   InteractionResponseFlags,
   InteractionResponseType,
 } from 'discord-interactions'
+import { Response } from 'express'
 
 /**
  * Sends an ephemeral success message to the user
- * @param {Object} res - Express response object
- * @param {string} content - The message content to send
- * @returns {Object} Express response
+ * @param res - Express response object
+ * @param content - The message content to send
+ * @returns Express response
  */
-export function sendEphemeralSuccess(res, content) {
+export function sendEphemeralSuccess(res: Response, content: string): unknown {
   return res.send({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
@@ -21,11 +22,11 @@ export function sendEphemeralSuccess(res, content) {
 
 /**
  * Sends an ephemeral error message to the user
- * @param {Object} res - Express response object
- * @param {string} content - The error message content to send
- * @returns {Object} Express response
+ * @param res - Express response object
+ * @param content - The error message content to send
+ * @returns Express response
  */
-export function sendEphemeralError(res, content) {
+export function sendEphemeralError(res: Response, content: string): unknown {
   return res.send({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
@@ -37,9 +38,9 @@ export function sendEphemeralError(res, content) {
 
 /**
  * Sends a PONG response for Discord ping verification
- * @param {Object} res - Express response object
- * @returns {Object} Express response
+ * @param res - Express response object
+ * @returns Express response
  */
-export function sendPong(res) {
+export function sendPong(res: Response): unknown {
   return res.send({ type: InteractionResponseType.PONG })
 }

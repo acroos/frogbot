@@ -1,10 +1,10 @@
 import { MessageComponentTypes } from 'discord-interactions'
-import { SendMessageWithComponents } from '../utils/discord.js'
-import { GetGame, SetGame } from '../utils/redis.js'
-import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
+import { SendMessageWithComponents } from '../utils/discord.ts'
+import { GetGame, SetGame } from '../utils/redis.ts'
+import { FetchPlayerInfo } from '../utils/friends-of-risk.ts'
 import { VOTE_VALUES } from '../constants.js'
 import type { Game } from '../types/game.js'
-import type { FriendsOfRiskPlayerInfo } from '../types/friends-of-risk.js'
+import type { FriendsOfRiskPlayerInfo } from '../types/friends-of-risk.ts'
 
 /**
  * Marks a game as completed and sends winner selection poll

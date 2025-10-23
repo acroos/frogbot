@@ -5,10 +5,10 @@ import {
   AddPlayerToThread,
   DiscordRequest,
   SendMessageWithComponents,
-} from '../utils/discord.js'
-import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
-import { GetPlayerInGame, SetGame, SetPlayerInGame } from '../utils/redis.js'
-import { GetRandomizedSettings } from '../utils/utils.js'
+} from '../utils/discord.ts'
+import { FetchPlayerInfo } from '../utils/friends-of-risk.ts'
+import { GetPlayerInGame, SetGame, SetPlayerInGame } from '../utils/redis.ts'
+import { GetRandomizedSettings } from '../utils/utils.ts'
 import type { Game, DiscordMessage, GameSettings } from '../types/game.js'
 
 export class CreateGameError extends Error {

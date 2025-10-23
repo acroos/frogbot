@@ -16,18 +16,18 @@ import {
   ReadDiscordCommandOptionFromData,
   ReadGuildIdFromContext,
   ReadPlayerIdFromContext,
-} from './utils/discord.js'
+} from './utils/discord.ts'
 import {
   sendEphemeralSuccess,
   sendEphemeralError,
   sendPong,
-} from './utils/responses.js'
+} from './utils/responses.ts'
 import {
   CleanUpFinalizedGames,
   CleanUpOldGames,
   CloseSettingsSelection,
   FinalizeGames,
-} from './utils/utils.js'
+} from './utils/utils.ts'
 
 interface DiscordInteractionData {
   name?: string
@@ -66,8 +66,8 @@ async function handleCreateGameCommand(
   const { data } = req.body
   const guildId = ReadGuildIdFromContext(req.body)
   const creatorId = ReadPlayerIdFromContext(req.body)
-  const playerCount = ReadDiscordCommandOptionFromData(data, 'player_count')
-  const eloRequirement = ReadDiscordCommandOptionFromData(
+  const playerCount = ReadDiscordCommandOptionFromData<number>(data, 'player_count')
+  const eloRequirement = ReadDiscordCommandOptionFromData<number>(
     data,
     'elo_requirement'
   )

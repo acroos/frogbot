@@ -1,6 +1,6 @@
-import { GetGame, SetGame } from '../utils/redis.js'
-import { SendMessageWithContent } from '../utils/discord.js'
-import { sendStartGameMessage } from '../utils/utils.js'
+import { GetGame, SetGame } from '../utils/redis.ts'
+import { SendMessageWithContent } from '../utils/discord.ts'
+import { sendStartGameMessage } from '../utils/utils.ts'
 import type { Game } from '../types/game.ts'
 
 /**

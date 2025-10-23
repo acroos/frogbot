@@ -4,13 +4,13 @@ import {
   RemoveMessage,
   RemovePlayerFromThread,
   UpdateMessageWithComponents,
-} from '../utils/discord.js'
+} from '../utils/discord.ts'
 import {
   GetGame,
   RemoveGame,
   RemovePlayerInGame,
   SetGame,
-} from '../utils/redis.js'
+} from '../utils/redis.ts'
 import type { Game } from '../types/game.ts'
 
 export class LeaveGameError extends Error {
