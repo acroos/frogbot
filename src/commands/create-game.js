@@ -17,15 +17,6 @@ export class CreateGameError extends Error {
   }
 }
 
-class EloRequirementNotMetError extends CreateGameError {
-  constructor(playerElo, requiredElo) {
-    super(
-      `Your ELO (${playerElo}) does not meet the ELO requirement (${requiredElo}) requested for this game. Please create a game with a lower ELO requirement.`
-    )
-    this.name = 'EloRequirementNotMetError'
-  }
-}
-
 /**
  * Creates a new game with the specified parameters
  * @param {string} guildId - The Discord guild ID where the game is being created
@@ -138,22 +129,6 @@ function validateArguments(playerCount, eloRequirement) {
     throw new Error(
       `Invalid ELO requirement: ${eloRequirement}. Must be a number.`
     )
-  }
-}
-
-/**
- * Validates that the creator meets the ELO requirement
- * @param {Object} creatorData - Creator's player info
- * @param {number} requiredElo - Minimum ELO requirement
- * @throws {EloRequirementNotMetError} If creator's ELO is below requirement
- */
-function validateCreatorElo(creatorData, requiredElo) {
-  if (requiredElo <= 0) return
-
-  const creatorElo = creatorData?.ffa_elo_score || 0
-
-  if (!creatorElo || creatorElo < requiredElo) {
-    throw new EloRequirementNotMetError(creatorElo, requiredElo)
   }
 }
 

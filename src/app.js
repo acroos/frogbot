@@ -1,6 +1,4 @@
 import {
-  InteractionResponseFlags,
-  InteractionResponseType,
   InteractionType,
   verifyKeyMiddleware,
 } from 'discord-interactions'

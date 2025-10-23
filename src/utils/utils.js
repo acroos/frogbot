@@ -1,11 +1,10 @@
-import { MessageComponentTypes } from 'discord-interactions'
+import { MessageComponentTypes, ButtonStyleTypes } from 'discord-interactions'
 import {
   CloseThread,
   LockThread,
   SendMessageWithComponents,
 } from './discord.js'
-import { FetchPlayerInfo } from './friends-of-risk.js'
-import { VOTE_VALUES, TIMING } from '../constants.js'
+import { TIMING } from '../constants.js'
 import {
   GetFinalizedGames,
   MapToAllGames,
@@ -166,8 +165,6 @@ function gameShouldFinalize(startTime, completionTime) {
  * @returns {Promise<Object>} The sent message response
  */
 export async function sendStartGameMessage(game, selectedSettings) {
-  const { ButtonStyleTypes } = await import('discord-interactions')
-
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
