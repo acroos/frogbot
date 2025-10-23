@@ -14,6 +14,38 @@ export async function FetchPlayerInfo(playerId) {
   return data.data
 }
 
+/**
+ * Submits game results to Friends of Risk API
+ * @param {string} gameId - The game thread ID
+ * @param {string} settingsId - The settings ID used for the game
+ * @param {Array<string>} playerIds - Array of player IDs
+ * @param {string} winnerId - The winner's player ID
+ * @returns {Promise<Response>} The API response
+ */
+export async function ReportScore(gameId, settingsId, playerIds, winnerId) {
+  const body = {
+    messageid: gameId,
+    settingsid: settingsId,
+  }
+
+  // Put winner first, then remaining players
+  const orderedPlayers = [
+    winnerId,
+    ...playerIds.filter((id) => id !== winnerId),
+  ]
+
+  orderedPlayers.forEach((playerId, i) => {
+    const playerNumber = i + 1
+    body[`player${playerNumber}`] = playerId
+    body[`player${playerNumber}score`] = playerId === winnerId ? 1 : 0
+  })
+
+  return await FriendsOfRiskRequest('addgame', {
+    method: 'POST',
+    body: body,
+  })
+}
+
 export async function FriendsOfRiskRequest(endpoint, options) {
   try {
     // append endpoint to root API URL

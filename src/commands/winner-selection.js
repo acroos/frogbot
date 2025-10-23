@@ -1,5 +1,5 @@
 import { SendMessageWithContent } from '../utils/discord.js'
-import { FriendsOfRiskRequest } from '../utils/friends-of-risk.js'
+import { ReportScore } from '../utils/friends-of-risk.js'
 import { GetGame, RemoveAllPlayersInGame, SetGame } from '../utils/redis.js'
 import {
   VOTE_VALUES,
@@ -66,7 +66,7 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
           .join('\n')}`
       )
     } else if (winner !== null) {
-      const response = await addGameToFriendsOfRisk(
+      const response = await ReportScore(
         gameId,
         game.selectedSettingId,
         game.players,
@@ -80,12 +80,12 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
 
       // Save winner and notify in parallel
       await Promise.all([
+        RemoveAllPlayersInGame(gameId),
         SetGame(gameId, game),
         SendMessageWithContent(
           gameId,
           `Congratulations to the winner <@${winner}>!  The game has been stored on FriendsOfRisk, you should see the results live shortly.`
         ),
-        RemoveAllPlayersInGame(gameId),
       ])
     }
   } else {
@@ -128,33 +128,4 @@ function determineWinner(votes, requiredToWinCount) {
   }
 
   return null
-}
-
-/**
- * Submits game results to Friends of Risk API
- * @param {string} gameId - The game thread ID
- * @param {string} settingsId - The settings ID used for the game
- * @param {Array<string>} playerIds - Array of player IDs
- * @param {string} winnerId - The winner's player ID
- * @returns {Promise<Response>} The API response
- */
-async function addGameToFriendsOfRisk(gameId, settingsId, playerIds, winnerId) {
-  const body = {
-    messageid: gameId,
-    settingsid: settingsId,
-  }
-
-  // Put winner first, then remaining players
-  const orderedPlayers = [winnerId, ...playerIds.filter(id => id !== winnerId)]
-
-  orderedPlayers.forEach((playerId, i) => {
-    const playerNumber = i + 1
-    body[`player${playerNumber}`] = playerId
-    body[`player${playerNumber}score`] = playerId === winnerId ? 1 : 0
-  })
-
-  return await FriendsOfRiskRequest('addgame', {
-    method: 'POST',
-    body: body,
-  })
 }

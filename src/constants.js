@@ -34,9 +34,9 @@ export const REQUIRED_VOTES_BY_PLAYER_COUNT = {
  * Timing configurations for game lifecycle (in milliseconds)
  */
 export const TIMING = {
-  THREAD_OPEN_TIME: 180000,       // 3 minutes - Time before thread is locked after completion
+  THREAD_OPEN_TIME: 180000, // 3 minutes - Time before thread is locked after completion
   SETTINGS_SELECTION_TIME: 300000, // 5 minutes - Time allowed for players to vote on settings
-  OLD_GAME_THRESHOLD: 14400000,    // 4 hours - Games older than this are cleaned up
+  OLD_GAME_THRESHOLD: 14400000, // 4 hours - Games older than this are cleaned up
 }
 
 /**
