@@ -80,12 +80,33 @@ export async function SetFinalizedGames(gameIds) {
 }
 
 /**
- * Gets the game ID that a player is currently in
+ * Checks if a player is currently in a valid game
+ * Automatically cleans up stale records if the game no longer exists
  * @param {string} playerId - The Discord user ID
- * @returns {Promise<string|null>} The game ID or null if player not in a game
+ * @returns {Promise<boolean>} True if player is in a valid game, false otherwise
  */
-export async function GetPlayerInGame(playerId) {
-  return await redisClient.get(playerIdToActiveGameId(playerId))
+export async function IsPlayerInGame(playerId) {
+  const gameId = await redisClient.get(playerIdToActiveGameId(playerId))
+  if (!gameId) {
+    return false
+  }
+
+  // Verify the game still exists
+  const game = await GetGame(gameId)
+  if (!game) {
+    // Game no longer exists - clean up the stale player record
+    await RemovePlayerInGame(playerId)
+    return false
+  }
+
+  // Verify player is actually in the game's player list
+  if (!game.players || !game.players.includes(playerId)) {
+    // Player not in game - clean up the stale record
+    await RemovePlayerInGame(playerId)
+    return false
+  }
+
+  return true
 }
 
 /**

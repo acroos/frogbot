@@ -8,7 +8,7 @@ import {
 import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
 import {
   GetGame,
-  GetPlayerInGame,
+  IsPlayerInGame,
   SetGame,
   SetPlayerInGame,
 } from '../utils/redis.js'
@@ -74,14 +74,14 @@ async function validateJoinGameConditions(game, playerId) {
   const gameId = game.gameThreadId
 
   // Run independent validations in parallel
-  const [playerAlreadyInGame, playerInfo] = await Promise.all([
-    GetPlayerInGame(playerId),
+  const [isPlayerInGame, playerInfo] = await Promise.all([
+    IsPlayerInGame(playerId),
     game.eloRequirement > 0 ? FetchPlayerInfo(playerId) : Promise.resolve(null),
   ])
 
   // Validate if player is already in a game
-  if (playerAlreadyInGame) {
-    throw new JoinGameError(`Player ${playerId} is already in game ${gameId}`)
+  if (isPlayerInGame) {
+    throw new JoinGameError('You are already in a game. Please leave that game before joining a new one.')
   }
 
   // Validate if game is already full

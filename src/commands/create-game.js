@@ -7,7 +7,7 @@ import {
   SendMessageWithComponents,
 } from '../utils/discord.js'
 import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
-import { GetPlayerInGame, SetGame, SetPlayerInGame } from '../utils/redis.js'
+import { IsPlayerInGame, SetGame, SetPlayerInGame } from '../utils/redis.js'
 import { GetRandomizedSettings } from '../utils/utils.js'
 
 export class CreateGameError extends Error {
@@ -49,13 +49,13 @@ export default async function CreateGame(
   validateArguments(playerCount, eloRequirement)
 
   // Parallel operations: Check if player is already in a game and fetch player info
-  const [existingGame, playerInfo] = await Promise.all([
-    GetPlayerInGame(guildId, creatorId),
+  const [isInGame, playerInfo] = await Promise.all([
+    IsPlayerInGame(creatorId),
     FetchPlayerInfo(creatorId),
   ])
 
   // Check if player is already in a game
-  if (existingGame) {
+  if (isInGame) {
     throw new CreateGameError(
       'You are already in a game! Please leave it first before creating a new one.'
     )
