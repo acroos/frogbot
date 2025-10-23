@@ -3,7 +3,7 @@ import CONFIG from '../config.js'
 import { GAME_DEFAULTS } from '../constants.js'
 import {
   AddPlayerToThread,
-  DiscordRequest,
+  CreateGameThread,
   SendMessageWithComponents,
 } from '../utils/discord.js'
 import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
@@ -68,8 +68,8 @@ export default async function CreateGame(
   const creatorName = playerInfo.name || 'Player'
 
   // Create the game thread first
-  const gameThreadId = await createGameThread(
-    guildId,
+  const gameThreadId = await CreateGameThread(
+    CONFIG.loungeChannelId[guildId],
     creatorName,
     playerCount,
     eloRequirement
@@ -150,44 +150,6 @@ function validateCreatorElo(creatorData, requiredElo) {
   if (!creatorElo || creatorElo < requiredElo) {
     throw new EloRequirementNotMetError(creatorElo, requiredElo)
   }
-}
-
-/**
- * Creates a Discord thread for the game
- * @param {string} guildId - Guild ID
- * @param {string} creatorName - Name of the game creator
- * @param {number} playerCount - Number of players
- * @param {number} eloRequirement - ELO requirement
- * @returns {Promise<string>} The created thread ID
- * @throws {Error} If thread creation fails
- */
-async function createGameThread(
-  guildId,
-  creatorName,
-  playerCount,
-  eloRequirement
-) {
-  console.log(`Creating game thread in guild: ${guildId}`)
-  console.log(`Using lounge channel ID: ${CONFIG.loungeChannelId[guildId]}`)
-
-  const result = await DiscordRequest(
-    `channels/${CONFIG.loungeChannelId[guildId]}/threads`,
-    {
-      method: 'POST',
-      body: {
-        name: `${creatorName}'s Lounge Game - Players: ${playerCount}, ELO: ${eloRequirement}`,
-        type: 12, // Private thread
-        invitable: false, // Players cannot invite others
-      },
-    }
-  )
-
-  if (!result.ok) {
-    throw new Error(`Failed to create game thread: ${result.statusText}`)
-  }
-
-  const newThreadJson = await result.json()
-  return newThreadJson.id
 }
 
 /**

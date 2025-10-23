@@ -168,6 +168,31 @@ export async function CloseThread(threadId) {
   return result
 }
 
+export async function CreateGameThread(
+  loungeChannelId,
+  creatorName,
+  playerCount,
+  eloRequirement
+) {
+  console.log(`Creating game thread in lounge channel: ${loungeChannelId}`)
+
+  const result = await DiscordRequest(`channels/${loungeChannelId}/threads`, {
+    method: 'POST',
+    body: {
+      name: `${creatorName}'s Lounge Game - Players: ${playerCount}, ELO: ${eloRequirement}`,
+      type: 12, // Private thread
+      invitable: false, // Players cannot invite others
+    },
+  })
+
+  if (!result.ok) {
+    throw new Error(`Failed to create game thread: ${result.statusText}`)
+  }
+
+  const newThreadJson = await result.json()
+  return newThreadJson.id
+}
+
 /* Discord helpers */
 export function ReadDiscordCommandOptionFromData(
   data,
