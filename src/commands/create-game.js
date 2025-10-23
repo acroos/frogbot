@@ -62,12 +62,7 @@ export default async function CreateGame(
   }
 
   // Validate player meets ELO requirement
-  const playerElo = playerInfo?.ffa_elo_score
-  if (playerElo === undefined || playerElo < eloRequirement) {
-    throw new CreateGameError(
-      `Your ELO (${playerElo || 0}) does not meet the minimum requirement (${eloRequirement}) to create this game!`
-    )
-  }
+  validateCreatorElo(playerInfo, eloRequirement)
 
   // Get creator's display name for thread creation
   const creatorName = playerInfo.name || 'Player'
