@@ -45,10 +45,10 @@ When migrating a file from `.js` to `.ts`:
 - [ ] `src/utils/utils.js` - Utility functions
 - [ ] `src/utils/redis.js` - Redis database operations
 - [ ] `src/utils/discord.js` - Discord API utilities
-- [ ] `src/utils/friends-of-risk.js` - External API integration
+- [x] `src/utils/friends-of-risk.ts` - External API integration ✅
 
 ### Commands (Migrate Second)
-- [ ] `src/commands/create-game.js`
+- [x] `src/commands/create-game.ts` ✅
 - [ ] `src/commands/join-game.js`
 - [ ] `src/commands/leave-game.js`
 - [ ] `src/commands/finish-game.js`
