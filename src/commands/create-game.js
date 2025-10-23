@@ -70,7 +70,7 @@ export default async function CreateGame(
   }
 
   // Get creator's display name for thread creation
-  const creatorName = playerInfo.username || 'Player'
+  const creatorName = playerInfo.name || 'Player'
 
   // Create the game thread first
   const gameThreadId = await createGameThread(
