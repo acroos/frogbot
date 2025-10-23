@@ -12,14 +12,16 @@
   },
   "license": "Unlicense",
   "author": "acroos",
-  "main": "src/app.js",
+  "main": "src/app.ts",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "register": "node src/commands.js",
-    "dev": "nodemon src/server.js",
-    "format": "prettier --write src/**/*.{js,json,md}",
-    "lint": "eslint src/**/*.js"
+    "start": "tsx src/server.ts",
+    "register": "tsx src/commands.ts",
+    "dev": "nodemon --exec tsx src/server.ts",
+    "format": "prettier --write 'src/**/*.{ts,json,md}'",
+    "lint": "eslint 'src/**/*.ts'",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch"
   },
   "dependencies": {
     "discord-interactions": "^4.3.0",
@@ -30,9 +32,15 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
     "eslint": "^9.34.0",
     "globals": "^16.3.0",
     "nodemon": "^3.1.10",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   }
 }

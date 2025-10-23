@@ -1,21 +1,23 @@
-import { GetGame, SetGame } from '../utils/redis.js'
-import { SendMessageWithContent } from '../utils/discord.js'
-import { sendStartGameMessage } from '../utils/utils.js'
+import { GetGame, SetGame } from '../utils/redis.ts'
+import { SendMessageWithContent } from '../utils/discord.ts'
+import { sendStartGameMessage } from '../utils/utils.ts'
+import type { Game } from '../types/game.ts'
 
 /**
  * Handles a player's vote for game settings
- * @param {string} threadId - The Discord thread ID of the game
- * @param {string} playerId - The Discord user ID of the voting player
- * @param {string} selectedSettingId - The ID of the selected setting
- * @returns {Promise<boolean>} True if vote was counted, false if settings already finalized
+ * @param gameId - The Discord thread ID of the game
+ * @param playerId - The Discord user ID of the voting player
+ * @param selectionId - The ID of the selected setting
+ * @returns True if vote was counted, false if settings already finalized
  */
 export default async function SettingsPollSelectionMade(
-  gameId,
-  playerId,
-  selectionId
-) {
+  gameId: string,
+  playerId: string,
+  selectionId: string
+): Promise<boolean> {
   // Fetch game once at the start
-  const game = await GetGame(gameId)
+  const gameData = await GetGame(gameId)
+  const game = gameData as Game
 
   // Validate that the game is not already finalized
   const votes = Object.values(game.settingsVotes)
@@ -27,7 +29,9 @@ export default async function SettingsPollSelectionMade(
   const settingsChoice = game.settingsOptions.find(
     (option) => option.settingid === selectionId
   )
-  game.settingsVotes[playerId] = settingsChoice
+  if (settingsChoice) {
+    game.settingsVotes[playerId] = settingsChoice
+  }
   await SetGame(gameId, game)
 
   // Check if we should finalize
@@ -36,6 +40,9 @@ export default async function SettingsPollSelectionMade(
     // Finalize settings - randomly select from votes
     const selectedSettings =
       updatedVotes[Math.floor(Math.random() * updatedVotes.length)]
+    if (!selectedSettings) {
+      throw new Error('No settings selected')
+    }
     game.selectedSettingId = selectedSettings.settingid
     await SetGame(gameId, game)
 
@@ -50,10 +57,9 @@ export default async function SettingsPollSelectionMade(
 
 /**
  * Pings players who haven't voted yet
- * @param {Object} game - The game object
- * @returns {Promise<void>}
+ * @param game - The game object
  */
-async function pingRemainingVotes(game) {
+async function pingRemainingVotes(game: Game): Promise<void> {
   const alreadyVoted = Object.keys(game.settingsVotes)
   const remainingVoters = game.players.filter(
     (playerId) => !alreadyVoted.includes(playerId)

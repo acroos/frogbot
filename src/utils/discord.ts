@@ -1,12 +1,22 @@
 import { InteractionResponseFlags } from 'discord-interactions'
-import CONFIG from '../config.js'
+import CONFIG from '../config.ts'
+
+interface DiscordRequestOptions extends Omit<RequestInit, 'body'> {
+  body?: Record<string, unknown> | Array<Record<string, unknown>>
+}
 
 /* Discord API functions */
-export async function DiscordRequest(endpoint, options) {
+export async function DiscordRequest(
+  endpoint: string,
+  options: DiscordRequestOptions
+): Promise<Response> {
   // append endpoint to root API URL
   const url = `https://discord.com/api/v10/${endpoint}`
   // Stringify payloads
-  if (options.body) options.body = JSON.stringify(options.body)
+  let body: string | undefined
+  if (options.body) {
+    body = JSON.stringify(options.body)
+  }
   // Use fetch to make requests
   const res = await fetch(url, {
     headers: {
@@ -15,6 +25,7 @@ export async function DiscordRequest(endpoint, options) {
       'User-Agent': 'FrogBot (https://github.com/acroos/frogbot, 1.0.0)',
     },
     ...options,
+    body,
   })
   // throw API errors
   if (!res.ok) {
@@ -25,7 +36,9 @@ export async function DiscordRequest(endpoint, options) {
   return res
 }
 
-export async function InstallGlobalCommands(commands) {
+export async function InstallGlobalCommands(
+  commands: Array<Record<string, unknown>>
+): Promise<void> {
   // API endpoint to overwrite global commands
   const endpoint = `applications/${CONFIG.appId}/commands`
 
@@ -37,7 +50,10 @@ export async function InstallGlobalCommands(commands) {
   }
 }
 
-export async function SendMessageWithContent(channelId, content) {
+export async function SendMessageWithContent(
+  channelId: string,
+  content: string
+): Promise<unknown> {
   const result = await DiscordRequest(`channels/${channelId}/messages`, {
     method: 'POST',
     body: {
@@ -53,7 +69,10 @@ export async function SendMessageWithContent(channelId, content) {
   return json
 }
 
-export async function SendMessageWithComponents(channelId, components) {
+export async function SendMessageWithComponents(
+  channelId: string,
+  components: Array<Record<string, unknown>>
+): Promise<unknown> {
   const result = await DiscordRequest(`channels/${channelId}/messages`, {
     method: 'POST',
     body: {
@@ -73,10 +92,10 @@ export async function SendMessageWithComponents(channelId, components) {
 }
 
 export async function UpdateMessageWithComponents(
-  channelId,
-  messageId,
-  components
-) {
+  channelId: string,
+  messageId: string,
+  components: Array<Record<string, unknown>>
+): Promise<unknown> {
   const result = await DiscordRequest(
     `channels/${channelId}/messages/${messageId}`,
     {
@@ -96,7 +115,10 @@ export async function UpdateMessageWithComponents(
   return json
 }
 
-export async function RemoveMessage(channelId, messageId) {
+export async function RemoveMessage(
+  channelId: string,
+  messageId: string
+): Promise<Response> {
   const result = await DiscordRequest(
     `channels/${channelId}/messages/${messageId}`,
     {
@@ -110,7 +132,10 @@ export async function RemoveMessage(channelId, messageId) {
   return result
 }
 
-export async function AddPlayerToThread(threadId, playerId) {
+export async function AddPlayerToThread(
+  threadId: string,
+  playerId: string
+): Promise<Response> {
   const result = await DiscordRequest(
     `channels/${threadId}/thread-members/${playerId}`,
     {
@@ -124,7 +149,10 @@ export async function AddPlayerToThread(threadId, playerId) {
   return result
 }
 
-export async function RemovePlayerFromThread(threadId, playerId) {
+export async function RemovePlayerFromThread(
+  threadId: string,
+  playerId: string
+): Promise<Response> {
   const result = await DiscordRequest(
     `channels/${threadId}/thread-members/${playerId}`,
     {
@@ -138,7 +166,7 @@ export async function RemovePlayerFromThread(threadId, playerId) {
   return result
 }
 
-export async function LockThread(threadId) {
+export async function LockThread(threadId: string): Promise<Response> {
   const result = await DiscordRequest(`channels/${threadId}`, {
     method: 'PATCH',
     body: {
@@ -153,7 +181,7 @@ export async function LockThread(threadId) {
   return result
 }
 
-export async function CloseThread(threadId) {
+export async function CloseThread(threadId: string): Promise<Response> {
   const result = await DiscordRequest(`channels/${threadId}`, {
     method: 'DELETE',
   })
@@ -166,13 +194,13 @@ export async function CloseThread(threadId) {
 }
 
 /* Discord helpers */
-export function ReadDiscordCommandOptionFromData(
-  data,
-  name,
-  defaultValue = null
-) {
+export function ReadDiscordCommandOptionFromData<T = unknown>(
+  data: { options?: Array<{ name: string; value: unknown }> },
+  name: string,
+  defaultValue: T | null = null
+): T | null {
   // Find the option in the data
-  const option = data.options.find((opt) => opt.name === name)
+  const option = data.options?.find((opt) => opt.name === name)
 
   // If the option is not found, log info and return the default value
   if (!option) {
@@ -181,18 +209,28 @@ export function ReadDiscordCommandOptionFromData(
   }
 
   // If the option is found, return its value
-  return option.value
+  return option.value as T
 }
 
-export function ReadPlayerIdFromContext(body) {
+export function ReadPlayerIdFromContext(body: {
+  context?: number
+  member?: {
+    user?: {
+      id: string
+    }
+  }
+  user?: {
+    id: string
+  }
+}): string {
   // If context is 0, return the member's user ID
   if (body.context === 0) {
-    return body.member.user.id
+    return body.member?.user?.id || ''
   }
   // Otherwise, return the user ID directly
-  return body.user.id
+  return body.user?.id || ''
 }
 
-export function ReadGuildIdFromContext(body) {
-  return body.guild_id
+export function ReadGuildIdFromContext(body: { guild_id?: string }): string {
+  return body.guild_id || ''
 }

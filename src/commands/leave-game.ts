@@ -1,19 +1,20 @@
 import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
-import CONFIG from '../config.js'
+import CONFIG from '../config.ts'
 import {
   RemoveMessage,
   RemovePlayerFromThread,
   UpdateMessageWithComponents,
-} from '../utils/discord.js'
+} from '../utils/discord.ts'
 import {
   GetGame,
   RemoveGame,
   RemovePlayerInGame,
   SetGame,
-} from '../utils/redis.js'
+} from '../utils/redis.ts'
+import type { Game } from '../types/game.ts'
 
 export class LeaveGameError extends Error {
-  constructor(message, options) {
+  constructor(message: string, options?: ErrorOptions) {
     super(message, options)
     this.name = 'LeaveGameError'
   }
@@ -21,20 +22,24 @@ export class LeaveGameError extends Error {
 
 /**
  * Removes a player from a game they previously joined
- * @param {string} guildId - The Discord guild ID
- * @param {string} playerId - The Discord user ID of the player leaving
- * @param {string} gameId - The Discord thread ID of the game to leave
- * @returns {Promise<void>}
+ * @param guildId - The Discord guild ID
+ * @param playerId - The Discord user ID of the player leaving
+ * @param gameId - The Discord thread ID of the game to leave
  * @throws {LeaveGameError} If player cannot leave (not in game, game not found, etc.)
  */
 // TODO:
 // - If last player leaves game, cancel game
-export default async function LeaveGame(guildId, playerId, gameId) {
+export default async function LeaveGame(
+  guildId: string,
+  playerId: string,
+  gameId: string
+): Promise<void> {
   // Fetch the game from Redis
-  const game = await GetGame(gameId)
-  if (!game) {
+  const gameData = await GetGame(gameId)
+  if (!gameData) {
     throw new LeaveGameError(`Could not find game with ID ${gameId}`)
   }
+  const game = gameData as Game
 
   if (game.selectedSettingId) {
     throw new LeaveGameError('Cannot leave a game after it has started')
@@ -61,11 +66,14 @@ export default async function LeaveGame(guildId, playerId, gameId) {
 
 /**
  * Updates the ping message in the lounge channel after player leaves
- * @param {string} guildId - The Discord guild ID
- * @param {Object} game - The game object
- * @returns {Promise<Object>} The updated message response
+ * @param guildId - The Discord guild ID
+ * @param game - The game object
+ * @returns The updated message response
  */
-async function updateGamePingMessage(guildId, game) {
+async function updateGamePingMessage(
+  guildId: string,
+  game: Game
+): Promise<unknown> {
   const { gameThreadId, creatorId, playerCount, eloRequirement } = game
 
   const components = [
@@ -86,7 +94,7 @@ async function updateGamePingMessage(guildId, game) {
     },
   ]
   return await UpdateMessageWithComponents(
-    CONFIG.loungeChannelId[guildId],
+    CONFIG.loungeChannelId[guildId as keyof typeof CONFIG.loungeChannelId],
     game.pingMessageId,
     components
   )
@@ -94,15 +102,17 @@ async function updateGamePingMessage(guildId, game) {
 
 /**
  * Cancels the game if no players remain
- * @param {string} guildId - The Discord guild ID
- * @param {Object} game - The game object
- * @returns {Promise<void>}
+ * @param guildId - The Discord guild ID
+ * @param game - The game object
  */
-async function cancelGameIfEmpty(guildId, game) {
+async function cancelGameIfEmpty(guildId: string, game: Game): Promise<void> {
   const { players, pingMessageId, gameThreadId } = game
   if (players.length === 0) {
     await Promise.all([
-      RemoveMessage(CONFIG.loungeChannelId[guildId], pingMessageId),
+      RemoveMessage(
+        CONFIG.loungeChannelId[guildId as keyof typeof CONFIG.loungeChannelId],
+        pingMessageId
+      ),
       RemoveGame(gameThreadId),
     ])
   }

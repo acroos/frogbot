@@ -19,4 +19,7 @@ ENV PORT=3000
 # Expose the port that the app will run on
 EXPOSE 3000
 
-ENTRYPOINT [ "node", "/app/src/server.js" ]
+# Install tsx globally for running TypeScript
+RUN npm install -g tsx
+
+ENTRYPOINT [ "tsx", "/app/src/server.ts" ]

@@ -1,6 +1,29 @@
-import { InstallGlobalCommands } from './utils/discord.js'
+import { InstallGlobalCommands } from './utils/discord.ts'
 
-const CREATE_GAME_COMMAND = {
+interface CommandChoice {
+  name: string
+  value: number
+}
+
+interface CommandOption {
+  type: number
+  name: string
+  description: string
+  required: boolean
+  choices: CommandChoice[]
+}
+
+interface Command {
+  name: string
+  description: string
+  type: number
+  integration_types: number[]
+  contexts: number[]
+  options: CommandOption[]
+  [key: string]: unknown
+}
+
+const CREATE_GAME_COMMAND: Command = {
   name: 'create_game',
   description: 'Create a new Risk Competitive Lounge game',
   type: 1,
@@ -39,6 +62,6 @@ const CREATE_GAME_COMMAND = {
   ],
 }
 
-const ALL_COMMANDS = [CREATE_GAME_COMMAND]
+const ALL_COMMANDS: Command[] = [CREATE_GAME_COMMAND]
 
 InstallGlobalCommands(ALL_COMMANDS)

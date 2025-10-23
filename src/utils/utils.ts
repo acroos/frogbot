@@ -1,11 +1,10 @@
-import { MessageComponentTypes } from 'discord-interactions'
+import { MessageComponentTypes, ButtonStyleTypes } from 'discord-interactions'
 import {
   CloseThread,
   LockThread,
   SendMessageWithComponents,
-} from './discord.js'
-import { FetchPlayerInfo } from './friends-of-risk.js'
-import { VOTE_VALUES, TIMING } from '../constants.js'
+} from './discord.ts'
+import { TIMING } from '../constants.ts'
 import {
   GetFinalizedGames,
   MapToAllGames,
@@ -13,18 +12,18 @@ import {
   RemoveGame,
   SetFinalizedGames,
   SetGame,
-} from './redis.js'
+} from './redis.ts'
+import type { Game, GameSettings } from '../types/game.ts'
 
 /**
  * Finalizes completed games by locking their threads
  * Runs periodically via cron job
- * @returns {Promise<void>}
  */
-export function FinalizeGames() {
+export function FinalizeGames(): void {
   const startTime = Date.now()
 
-  const finalizedGames = []
-  MapToAllGames(async (game) => {
+  const finalizedGames: string[] = []
+  MapToAllGames(async (game: Game) => {
     if (gameShouldFinalize(startTime, game.completedAt)) {
       const response = await LockThread(game.gameThreadId)
       if (!response.ok) {
@@ -44,16 +43,15 @@ export function FinalizeGames() {
 /**
  * Cleans up finalized games by closing threads and removing from Redis
  * Runs periodically via cron job
- * @returns {Promise<void>}
  */
-export function CleanUpFinalizedGames() {
+export function CleanUpFinalizedGames(): void {
   console.log(`Starting finalized game cleanup at ${new Date().toUTCString()}`)
   GetFinalizedGames().then((gameIds) => {
     if (!gameIds) {
       return
     }
 
-    for (let gameId of gameIds) {
+    for (const gameId of gameIds) {
       CloseThread(gameId)
         .then(async () => {
           await RemoveGame(gameId)
@@ -69,11 +67,10 @@ export function CleanUpFinalizedGames() {
 /**
  * Cleans up old games that exceed the OLD_GAME_THRESHOLD
  * Runs periodically via cron job
- * @returns {Promise<void>}
  */
-export function CleanUpOldGames() {
+export function CleanUpOldGames(): void {
   const startTime = Date.now()
-  MapToAllGames(async (game) => {
+  MapToAllGames(async (game: Game) => {
     if (startTime - game.createdAt > TIMING.OLD_GAME_THRESHOLD) {
       CloseThread(game.gameThreadId)
         .then(async () => {
@@ -92,11 +89,10 @@ export function CleanUpOldGames() {
  * Closes settings selection for filled games after the selection time has elapsed
  * Randomly selects settings if not enough votes
  * Runs periodically via cron job
- * @returns {Promise<void>}
  */
-export function CloseSettingsSelection() {
+export function CloseSettingsSelection(): void {
   const startTime = Date.now()
-  MapToAllGames(async (game) => {
+  MapToAllGames(async (game: Game) => {
     // Settings have already been selected
     if (game.selectedSettingId) {
       return
@@ -119,8 +115,13 @@ export function CloseSettingsSelection() {
             Math.floor(Math.random() * game.settingsOptions.length)
           ]
 
+    if (!selectedSettings) {
+      console.error('No settings could be selected for game')
+      return
+    }
+
     game.selectedSettingId = selectedSettings.settingid
-    return await Promise.all([
+    await Promise.all([
       sendStartGameMessage(game, selectedSettings),
       SetGame(game.gameThreadId, game),
     ])
@@ -129,29 +130,39 @@ export function CloseSettingsSelection() {
 
 /**
  * Gets 3 randomized settings for the specified player count
- * @param {number} playerCount - Number of players (4, 5, or 6)
- * @returns {Array<Object>} Array of 3 random setting objects
+ * @param playerCount - Number of players (4, 5, or 6)
+ * @returns Array of 3 random setting objects
  * @throws {Error} If player count is invalid
  */
-export function GetRandomizedSettings(playerCount) {
-  const settingsForPlayerCount = SETTINGS_BY_PLAYER_COUNT[playerCount]
+export function GetRandomizedSettings(playerCount: number): GameSettings[] {
+  const settingsForPlayerCount =
+    SETTINGS_BY_PLAYER_COUNT[
+      playerCount as keyof typeof SETTINGS_BY_PLAYER_COUNT
+    ]
   if (!settingsForPlayerCount) {
     throw new Error(`Invalid player count: ${playerCount}`)
   }
 
+  // Clone the array to avoid mutating the original
+  const availableSettings = [...settingsForPlayerCount]
+
   // Choose 3 random settings from the list
-  const selectedSettings = []
+  const selectedSettings: GameSettings[] = []
   while (selectedSettings.length < 3) {
-    const randomIndex = Math.floor(
-      Math.random() * settingsForPlayerCount.length
-    )
-    selectedSettings.push(settingsForPlayerCount.splice(randomIndex, 1)[0])
+    const randomIndex = Math.floor(Math.random() * availableSettings.length)
+    const setting = availableSettings.splice(randomIndex, 1)[0]
+    if (setting) {
+      selectedSettings.push(setting)
+    }
   }
 
   return selectedSettings
 }
 
-function gameShouldFinalize(startTime, completionTime) {
+function gameShouldFinalize(
+  startTime: number,
+  completionTime: number | undefined
+): boolean {
   if (!completionTime) {
     return false
   }
@@ -161,17 +172,18 @@ function gameShouldFinalize(startTime, completionTime) {
 
 /**
  * Sends the game start message with finalized settings and finish button
- * @param {Object} game - The game object
- * @param {Object} selectedSettings - The selected settings
- * @returns {Promise<Object>} The sent message response
+ * @param game - The game object
+ * @param selectedSettings - The selected settings
+ * @returns The sent message response
  */
-export async function sendStartGameMessage(game, selectedSettings) {
-  const { ButtonStyleTypes } = await import('discord-interactions')
-
+export async function sendStartGameMessage(
+  game: Game,
+  selectedSettings: GameSettings
+): Promise<unknown> {
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
-      content: `${game.players.map((playerId) => `<@${playerId}>`)}\nSettings have been finalized for the game!`,
+      content: `${game.players.map((playerId: string) => `<@${playerId}>`)}\nSettings have been finalized for the game!`,
     },
     {
       type: MessageComponentTypes.MEDIA_GALLERY,
@@ -429,4 +441,4 @@ const SETTINGS_BY_PLAYER_COUNT = {
       link: 'https://friendsofrisk.com/setting/8294.png',
     },
   ],
-}
+} as const
