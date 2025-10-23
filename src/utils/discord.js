@@ -169,17 +169,15 @@ export async function CloseThread(threadId) {
 }
 
 export async function CreateGameThread(
+  name,
   loungeChannelId,
-  creatorName,
-  playerCount,
-  eloRequirement
 ) {
   console.log(`Creating game thread in lounge channel: ${loungeChannelId}`)
 
   const result = await DiscordRequest(`channels/${loungeChannelId}/threads`, {
     method: 'POST',
     body: {
-      name: `${creatorName}'s Lounge Game - Players: ${playerCount}, ELO: ${eloRequirement}`,
+      name: name,
       type: 12, // Private thread
       invitable: false, // Players cannot invite others
     },

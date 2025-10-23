@@ -69,10 +69,8 @@ export default async function CreateGame(
 
   // Create the game thread first
   const gameThreadId = await CreateGameThread(
-    CONFIG.loungeChannelId[guildId],
-    creatorName,
-    playerCount,
-    eloRequirement
+    `${creatorName}'s Lounge Game - Players: ${playerCount}, ELO: ${eloRequirement}`,
+    CONFIG.loungeChannelId[guildId]
   )
 
   // Now create ping message and send initial message in parallel
