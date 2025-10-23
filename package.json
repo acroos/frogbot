@@ -18,7 +18,7 @@
     "start": "tsx src/server.ts",
     "register": "tsx src/commands.ts",
     "dev": "nodemon --exec tsx src/server.ts",
-    "format": "prettier --write src/**/*.{ts,json,md}",
+    "format": "prettier --write 'src/**/*.{ts,json,md}'",
     "lint": "eslint 'src/**/*.ts'",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch"

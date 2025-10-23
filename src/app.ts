@@ -1,7 +1,4 @@
-import {
-  InteractionType,
-  verifyKeyMiddleware,
-} from 'discord-interactions'
+import { InteractionType, verifyKeyMiddleware } from 'discord-interactions'
 import express, { Request, Response, Express } from 'express'
 import cron from 'node-cron'
 import CreateGame, { CreateGameError } from './commands/create-game.ts'
@@ -66,7 +63,10 @@ async function handleCreateGameCommand(
   const { data } = req.body
   const guildId = ReadGuildIdFromContext(req.body)
   const creatorId = ReadPlayerIdFromContext(req.body)
-  const playerCount = ReadDiscordCommandOptionFromData<number>(data, 'player_count')
+  const playerCount = ReadDiscordCommandOptionFromData<number>(
+    data,
+    'player_count'
+  )
   const eloRequirement = ReadDiscordCommandOptionFromData<number>(
     data,
     'elo_requirement'

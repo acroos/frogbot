@@ -40,7 +40,7 @@ export async function FriendsOfRiskRequest(
   try {
     // append endpoint to root API URL
     const url = `${CONFIG.friendsOfRiskApiBaseUrl}/${endpoint}`
-    
+
     // Stringify payloads
     const requestOptions = {
       ...options,

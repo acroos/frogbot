@@ -186,7 +186,10 @@ async function sendWelcomeMessage(game: Game, playerId: string): Promise<void> {
  * @param game - The game object
  * @returns The updated game object
  */
-async function updateGameFilled(gameId: string, game: Game): Promise<object | null> {
+async function updateGameFilled(
+  gameId: string,
+  game: Game
+): Promise<object | null> {
   game.filledAt = Date.now()
   return await SetGame(gameId, game)
 }

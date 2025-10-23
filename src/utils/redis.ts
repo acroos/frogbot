@@ -40,7 +40,10 @@ export async function GetGame(gameId: string): Promise<object | null> {
  * @param game - The game object to store
  * @returns The game object or null on error
  */
-export async function SetGame(gameId: string, game: Game): Promise<object | null> {
+export async function SetGame(
+  gameId: string,
+  game: Game
+): Promise<object | null> {
   try {
     await redisClient.SETEX(
       gameIdToRedisKey(gameId),
@@ -84,7 +87,9 @@ export async function SetFinalizedGames(gameIds: string[]): Promise<void> {
  * @param playerId - The Discord user ID
  * @returns The game ID or null if player not in a game
  */
-export async function GetPlayerInGame(playerId: string): Promise<string | null> {
+export async function GetPlayerInGame(
+  playerId: string
+): Promise<string | null> {
   return await redisClient.get(playerIdToActiveGameId(playerId))
 }
 
@@ -138,7 +143,9 @@ export async function ScanMap(
   }
 }
 
-export async function MapToAllGames(mapFunc: (game: Game) => void | Promise<void>): Promise<void> {
+export async function MapToAllGames(
+  mapFunc: (game: Game) => void | Promise<void>
+): Promise<void> {
   for await (const keys of redisClient.scanIterator({ MATCH: 'game-*' })) {
     for (const key of keys) {
       const value = await redisClient.get(key)

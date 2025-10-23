@@ -87,7 +87,9 @@ export default async function CreateGame(
   ])
 
   // Fetch the settings players can vote on (synchronous operation)
-  const settingsOptions = GetRandomizedSettings(finalPlayerCount) as GameSettings[]
+  const settingsOptions = GetRandomizedSettings(
+    finalPlayerCount
+  ) as GameSettings[]
 
   console.log('Settings options for the game:', JSON.stringify(settingsOptions))
 
@@ -153,20 +155,18 @@ async function createGameThread(
   eloRequirement: number
 ): Promise<string> {
   console.log(`Creating game thread in guild: ${guildId}`)
-  const loungeChannelId = CONFIG.loungeChannelId[guildId as keyof typeof CONFIG.loungeChannelId]
+  const loungeChannelId =
+    CONFIG.loungeChannelId[guildId as keyof typeof CONFIG.loungeChannelId]
   console.log(`Using lounge channel ID: ${loungeChannelId}`)
 
-  const result = await DiscordRequest(
-    `channels/${loungeChannelId}/threads`,
-    {
-      method: 'POST',
-      body: {
-        name: `${creatorName}'s Lounge Game - Players: ${playerCount}, ELO: ${eloRequirement}`,
-        type: 12, // Private thread
-        invitable: false, // Players cannot invite others
-      },
-    }
-  )
+  const result = await DiscordRequest(`channels/${loungeChannelId}/threads`, {
+    method: 'POST',
+    body: {
+      name: `${creatorName}'s Lounge Game - Players: ${playerCount}, ELO: ${eloRequirement}`,
+      type: 12, // Private thread
+      invitable: false, // Players cannot invite others
+    },
+  })
 
   if (!result.ok) {
     throw new Error(`Failed to create game thread: ${result.statusText}`)
@@ -192,9 +192,11 @@ async function sendPingMessageInChannel(
   playerCount: number,
   eloRequirement: number
 ): Promise<DiscordMessage> {
-  const loungeRoleId = CONFIG.loungeRoleId[guildId as keyof typeof CONFIG.loungeRoleId]
-  const loungeChannelId = CONFIG.loungeChannelId[guildId as keyof typeof CONFIG.loungeChannelId]
-  
+  const loungeRoleId =
+    CONFIG.loungeRoleId[guildId as keyof typeof CONFIG.loungeRoleId]
+  const loungeChannelId =
+    CONFIG.loungeChannelId[guildId as keyof typeof CONFIG.loungeChannelId]
+
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,

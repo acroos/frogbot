@@ -36,10 +36,12 @@ const CONFIG: Config = {
     // FrogBot test
     '1401765937241395273': '1401766016836571137',
   },
-  friendsOfRiskApiBaseUrl: process.env.FRIENDS_OF_RISK_API_BASE_URL || 'https://friendsofrisk.com/api', // Base URL for Friends of Risk API
-  friendsOfRiskApiKey: process.env.FRIENDS_OF_RISK_API_KEY || 'your-friends-of-risk-api-key', // API key for Friends of Risk
-  redisHost: process.env.REDIS_URL ||  'redis',
-  redisUseTLS: process.env.REDIS_USE_TLS || false
+  friendsOfRiskApiBaseUrl:
+    process.env.FRIENDS_OF_RISK_API_BASE_URL || 'https://friendsofrisk.com/api', // Base URL for Friends of Risk API
+  friendsOfRiskApiKey:
+    process.env.FRIENDS_OF_RISK_API_KEY || 'your-friends-of-risk-api-key', // API key for Friends of Risk
+  redisHost: process.env.REDIS_URL || 'redis',
+  redisUseTLS: process.env.REDIS_USE_TLS || false,
 }
 
 interface RequiredField {
@@ -63,7 +65,7 @@ function validateConfig(): void {
 
   for (const field of requiredFields) {
     const value = CONFIG[field.key]
-    
+
     // Check if value is missing or is a placeholder
     if (!value || (typeof value === 'string' && value.startsWith('your-'))) {
       errors.push(`${field.envVar} is not set or is using a placeholder value`)
@@ -73,10 +75,10 @@ function validateConfig(): void {
   if (errors.length > 0) {
     const errorMessage = [
       'Configuration validation failed:',
-      ...errors.map(err => `  - ${err}`),
+      ...errors.map((err) => `  - ${err}`),
       '\nPlease set the required environment variables before starting the application.',
     ].join('\n')
-    
+
     throw new Error(errorMessage)
   }
 

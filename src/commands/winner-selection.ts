@@ -129,7 +129,10 @@ async function pingRemainingVotes(game: Game): Promise<void> {
  * @param requiredToWinCount - Number of votes required to win
  * @returns The winner's player ID or null if no winner
  */
-function determineWinner(votes: string[], requiredToWinCount: number): string | null {
+function determineWinner(
+  votes: string[],
+  requiredToWinCount: number
+): string | null {
   const voteCounts: Record<string, number> = {}
   for (const vote of votes) {
     voteCounts[vote] = (voteCounts[vote] || 0) + 1
