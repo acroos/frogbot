@@ -57,8 +57,8 @@ When migrating a file from `.js` to `.ts`:
 
 ### Main Application (Migrate Last)
 - [ ] `src/commands.js` - Command registration
-- [ ] `src/app.js` - Main application logic
-- [ ] `src/server.js` - Express server setup
+- [x] `src/app.ts` - Main application logic ✅
+- [x] `src/server.ts` - Express server setup ✅
 
 ## Running During Migration
 

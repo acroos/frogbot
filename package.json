@@ -15,9 +15,9 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "tsx src/server.ts",
     "register": "node src/commands.js",
-    "dev": "nodemon src/server.js",
+    "dev": "nodemon --exec tsx src/server.ts",
     "format": "prettier --write src/**/*.{js,ts,json,md}",
     "lint": "eslint 'src/**/*.{js,ts}'",
     "type-check": "tsc --noEmit",
