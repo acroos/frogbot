@@ -1,6 +1,6 @@
 import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
-import CONFIG from '../config.js'
-import { GAME_DEFAULTS } from '../constants.js'
+import CONFIG from '../config.ts'
+import { GAME_DEFAULTS } from '../constants.ts'
 import {
   AddPlayerToThread,
   DiscordRequest,
@@ -9,7 +9,7 @@ import {
 import { FetchPlayerInfo } from '../utils/friends-of-risk.ts'
 import { GetPlayerInGame, SetGame, SetPlayerInGame } from '../utils/redis.ts'
 import { GetRandomizedSettings } from '../utils/utils.ts'
-import type { Game, DiscordMessage, GameSettings } from '../types/game.js'
+import type { Game, DiscordMessage, GameSettings } from '../types/game.ts'
 
 export class CreateGameError extends Error {
   constructor(message: string, options?: ErrorOptions) {

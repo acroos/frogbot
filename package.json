@@ -12,14 +12,14 @@
   },
   "license": "Unlicense",
   "author": "acroos",
-  "main": "src/app.js",
+  "main": "src/app.ts",
   "type": "module",
   "scripts": {
     "start": "tsx src/server.ts",
-    "register": "node src/commands.js",
+    "register": "tsx src/commands.ts",
     "dev": "nodemon --exec tsx src/server.ts",
-    "format": "prettier --write src/**/*.{js,ts,json,md}",
-    "lint": "eslint 'src/**/*.{js,ts}'",
+    "format": "prettier --write src/**/*.{ts,json,md}",
+    "lint": "eslint 'src/**/*.ts'",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch"
   },

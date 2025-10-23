@@ -12,7 +12,7 @@ import {
   SetGame,
   SetPlayerInGame,
 } from '../utils/redis.ts'
-import CONFIG from '../config.js'
+import CONFIG from '../config.ts'
 import type { Game } from '../types/game.ts'
 
 export class JoinGameError extends Error {

@@ -1,5 +1,5 @@
 import { InteractionResponseFlags } from 'discord-interactions'
-import CONFIG from '../config.js'
+import CONFIG from '../config.ts'
 
 interface DiscordRequestOptions extends Omit<RequestInit, 'body'> {
   body?: Record<string, unknown> | Array<Record<string, unknown>>

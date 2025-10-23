@@ -2,8 +2,8 @@ import { MessageComponentTypes } from 'discord-interactions'
 import { SendMessageWithComponents } from '../utils/discord.ts'
 import { GetGame, SetGame } from '../utils/redis.ts'
 import { FetchPlayerInfo } from '../utils/friends-of-risk.ts'
-import { VOTE_VALUES } from '../constants.js'
-import type { Game } from '../types/game.js'
+import { VOTE_VALUES } from '../constants.ts'
+import type { Game } from '../types/game.ts'
 import type { FriendsOfRiskPlayerInfo } from '../types/friends-of-risk.ts'
 
 /**

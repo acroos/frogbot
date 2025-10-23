@@ -1,5 +1,5 @@
 import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
-import CONFIG from '../config.js'
+import CONFIG from '../config.ts'
 import {
   RemoveMessage,
   RemovePlayerFromThread,

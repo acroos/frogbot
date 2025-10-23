@@ -10,10 +10,6 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
 
-    /* JavaScript Support */
-    "allowJs": true,
-    "checkJs": false,
-
     /* Emit */
     "noEmit": true,
     "outDir": "./dist",

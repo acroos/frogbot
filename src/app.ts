@@ -10,8 +10,8 @@ import JoinGame, { JoinGameError } from './commands/join-game.ts'
 import LeaveGame, { LeaveGameError } from './commands/leave-game.ts'
 import SettingsPollSelectionMade from './commands/settings-poll-selection.ts'
 import WinnerSelection from './commands/winner-selection.ts'
-import CONFIG from './config.js'
-import { VOTE_VALUES } from './constants.js'
+import CONFIG from './config.ts'
+import { VOTE_VALUES } from './constants.ts'
 import {
   ReadDiscordCommandOptionFromData,
   ReadGuildIdFromContext,

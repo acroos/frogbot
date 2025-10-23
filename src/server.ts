@@ -1,5 +1,5 @@
 import CreateApp from './app.ts'
-import CONFIG from './config.js'
+import CONFIG from './config.ts'
 
 const PORT = Number(CONFIG.port)
 

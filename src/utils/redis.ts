@@ -1,6 +1,6 @@
 import { createClient } from 'redis'
-import CONFIG from '../config.js'
-import { REDIS_TTL } from '../constants.js'
+import CONFIG from '../config.ts'
+import { REDIS_TTL } from '../constants.ts'
 import type { Game } from '../types/game.ts'
 
 const FINALIZED_GAMES_KEY = 'finalized-games'

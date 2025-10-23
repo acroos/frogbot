@@ -5,7 +5,7 @@ import {
   VOTE_VALUES,
   NOT_PLAYED_VOTE_THRESHOLD,
   REQUIRED_VOTES_BY_PLAYER_COUNT,
-} from '../constants.js'
+} from '../constants.ts'
 import type { Game } from '../types/game.ts'
 
 /**

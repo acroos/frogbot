@@ -1,6 +1,25 @@
 import 'dotenv/config'
 
-const CONFIG = {
+interface Config {
+  port: string | number
+  appId: string
+  publicKey: string
+  discordToken: string
+  loungeChannelId: {
+    '465846009164070912': string
+    '1401765937241395273': string
+  }
+  loungeRoleId: {
+    '465846009164070912': string
+    '1401765937241395273': string
+  }
+  friendsOfRiskApiBaseUrl: string
+  friendsOfRiskApiKey: string
+  redisHost: string
+  redisUseTLS: string | boolean
+}
+
+const CONFIG: Config = {
   port: process.env.PORT || 3000, // Default port for the app
   appId: process.env.APP_ID || 'your-app-id', // Your Discord application ID
   publicKey: process.env.PUBLIC_KEY || 'your-public-key', // Your Discord public key
@@ -23,25 +42,30 @@ const CONFIG = {
   redisUseTLS: process.env.REDIS_USE_TLS || false
 }
 
+interface RequiredField {
+  key: keyof Config
+  envVar: string
+}
+
 /**
  * Validates that all required configuration values are present
  * @throws {Error} If any required config is missing or has default placeholder values
  */
-function validateConfig() {
-  const requiredFields = [
+function validateConfig(): void {
+  const requiredFields: RequiredField[] = [
     { key: 'appId', envVar: 'APP_ID' },
     { key: 'publicKey', envVar: 'PUBLIC_KEY' },
     { key: 'discordToken', envVar: 'DISCORD_TOKEN' },
     { key: 'friendsOfRiskApiKey', envVar: 'FRIENDS_OF_RISK_API_KEY' },
   ]
 
-  const errors = []
+  const errors: string[] = []
 
   for (const field of requiredFields) {
     const value = CONFIG[field.key]
     
     // Check if value is missing or is a placeholder
-    if (!value || value.startsWith('your-')) {
+    if (!value || (typeof value === 'string' && value.startsWith('your-'))) {
       errors.push(`${field.envVar} is not set or is using a placeholder value`)
     }
   }

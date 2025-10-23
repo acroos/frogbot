@@ -4,7 +4,7 @@ import {
   LockThread,
   SendMessageWithComponents,
 } from './discord.ts'
-import { TIMING } from '../constants.js'
+import { TIMING } from '../constants.ts'
 import {
   GetFinalizedGames,
   MapToAllGames,
