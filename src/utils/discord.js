@@ -168,10 +168,7 @@ export async function CloseThread(threadId) {
   return result
 }
 
-export async function CreateGameThread(
-  name,
-  loungeChannelId,
-) {
+export async function CreateGameThread(name, loungeChannelId) {
   console.log(`Creating game thread in lounge channel: ${loungeChannelId}`)
 
   const result = await DiscordRequest(`channels/${loungeChannelId}/threads`, {

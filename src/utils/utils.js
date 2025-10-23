@@ -254,7 +254,7 @@ const SETTINGS_BY_PLAYER_COUNT = {
       gametype: '70',
       cards: 'fixed',
       link: 'https://friendsofrisk.com/setting/8352.png',
-    }
+    },
   ],
   5: [
     {
