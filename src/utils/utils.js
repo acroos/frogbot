@@ -248,6 +248,13 @@ const SETTINGS_BY_PLAYER_COUNT = {
       cards: 'fixed',
       link: 'https://friendsofrisk.com/setting/8273.png',
     },
+    {
+      settingid: '8352',
+      map: 'United States',
+      gametype: '70',
+      cards: 'fixed',
+      link: 'https://friendsofrisk.com/setting/8352.png',
+    }
   ],
   5: [
     {
