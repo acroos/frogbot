@@ -51,7 +51,7 @@ When migrating a file from `.js` to `.ts`:
 - [x] `src/commands/create-game.ts` ✅
 - [ ] `src/commands/join-game.js`
 - [ ] `src/commands/leave-game.js`
-- [ ] `src/commands/finish-game.js`
+- [x] `src/commands/finish-game.ts` ✅
 - [ ] `src/commands/settings-poll-selection.js`
 - [ ] `src/commands/winner-selection.js`
 

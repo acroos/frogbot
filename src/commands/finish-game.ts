@@ -3,14 +3,22 @@ import { SendMessageWithComponents } from '../utils/discord.js'
 import { GetGame, SetGame } from '../utils/redis.js'
 import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
 import { VOTE_VALUES } from '../constants.js'
+import type { Game } from '../types/game.js'
+import type { FriendsOfRiskPlayerInfo } from '../types/friends-of-risk.js'
 
 /**
  * Marks a game as completed and sends winner selection poll
- * @param {string} gameId - The Discord thread ID of the game to finish
- * @returns {Promise<boolean>} True if game was successfully finished, false if already finished
+ * @param gameId - The Discord thread ID of the game to finish
+ * @returns True if game was successfully finished, false if already finished
  */
-export default async function FinishGame(gameId) {
-  const game = await GetGame(gameId)
+export default async function FinishGame(gameId: string): Promise<boolean> {
+  const gameData = await GetGame(gameId)
+
+  if (!gameData) {
+    throw new Error(`Game with ID ${gameId} not found`)
+  }
+
+  const game = gameData as Game
 
   // Early return if game is already completed
   if (game.completedAt) {
@@ -22,7 +30,9 @@ export default async function FinishGame(gameId) {
 
   // Fetch player info and save game state in parallel
   const [players] = await Promise.all([
-    Promise.all(game.players.map((playerId) => FetchPlayerInfo(playerId))),
+    Promise.all(
+      game.players.map((playerId: string) => FetchPlayerInfo(playerId))
+    ) as Promise<FriendsOfRiskPlayerInfo[]>,
     SetGame(gameId, game),
   ])
 
