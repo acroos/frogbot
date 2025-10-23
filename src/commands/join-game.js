@@ -81,7 +81,9 @@ async function validateJoinGameConditions(game, playerId) {
 
   // Validate if player is already in a game
   if (isPlayerInGame) {
-    throw new JoinGameError('You are already in a game. Please leave that game before joining a new one.')
+    throw new JoinGameError(
+      'You are already in a game. Please leave that game before joining a new one.'
+    )
   }
 
   // Validate if game is already full

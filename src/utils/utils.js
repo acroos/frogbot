@@ -4,8 +4,7 @@ import {
   LockThread,
   SendMessageWithComponents,
 } from './discord.js'
-import { FetchPlayerInfo } from './friends-of-risk.js'
-import { VOTE_VALUES, TIMING } from '../constants.js'
+import { TIMING } from '../constants.js'
 import {
   GetFinalizedGames,
   MapToAllGames,

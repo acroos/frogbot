@@ -155,7 +155,10 @@ export async function LockThread(threadId) {
 
 export async function CloseThread(threadId) {
   const result = await DiscordRequest(`channels/${threadId}`, {
-    method: 'DELETE',
+    method: 'PATCH',
+    body: {
+      archived: true,
+    },
   })
 
   if (!result.ok) {
