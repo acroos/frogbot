@@ -45,7 +45,7 @@ export default async function CreateGame(
   playerCount = playerCount || GAME_DEFAULTS.PLAYER_COUNT
   eloRequirement = eloRequirement || GAME_DEFAULTS.ELO_REQUIREMENT
 
-    // Validate arguments
+  // Validate arguments
   validateArguments(playerCount, eloRequirement)
 
   // Parallel operations: Check if player is already in a game and fetch player info

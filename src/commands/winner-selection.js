@@ -1,7 +1,11 @@
 import { SendMessageWithContent } from '../utils/discord.js'
 import { FriendsOfRiskRequest } from '../utils/friends-of-risk.js'
 import { GetGame, RemoveAllPlayersInGame, SetGame } from '../utils/redis.js'
-import { VOTE_VALUES, NOT_PLAYED_VOTE_THRESHOLD, REQUIRED_VOTES_BY_PLAYER_COUNT } from '../constants.js'
+import {
+  VOTE_VALUES,
+  NOT_PLAYED_VOTE_THRESHOLD,
+  REQUIRED_VOTES_BY_PLAYER_COUNT,
+} from '../constants.js'
 
 /**
  * Handles a player's winner selection vote
@@ -71,9 +75,9 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
       if (!response.ok) {
         return false
       }
-      
+
       game.winner = winner
-      
+
       // Save winner and notify in parallel
       await Promise.all([
         SetGame(gameId, game),

@@ -48,23 +48,22 @@ export function FinalizeGames() {
  */
 export function CleanUpFinalizedGames() {
   console.log(`Starting finalized game cleanup at ${new Date().toUTCString()}`)
-  GetFinalizedGames()
-    .then((gameIds) => {
-      if (!gameIds) {
-        return
-      }
+  GetFinalizedGames().then((gameIds) => {
+    if (!gameIds) {
+      return
+    }
 
-      for (let gameId of gameIds) {
-        CloseThread(gameId)
-          .then(async () => {
-            await RemoveGame(gameId)
-            await RemoveAllPlayersInGame(gameId)
-          })
-          .catch((error) => {
-            console.error('Error cleaning up finalized games: ', error)
-          })
-      }
-    })
+    for (let gameId of gameIds) {
+      CloseThread(gameId)
+        .then(async () => {
+          await RemoveGame(gameId)
+          await RemoveAllPlayersInGame(gameId)
+        })
+        .catch((error) => {
+          console.error('Error cleaning up finalized games: ', error)
+        })
+    }
+  })
 }
 
 /**
@@ -160,11 +159,14 @@ function gameShouldFinalize(startTime, completionTime) {
   return startTime - completionTime > TIMING.THREAD_OPEN_TIME
 }
 
-async function sendStartGameMessage(game, selectedSettings) {
-  const gameId = game.gameThreadId
-  const players = await Promise.all(
-    game.players.map((playerId) => FetchPlayerInfo(playerId))
-  )
+/**
+ * Sends the game start message with finalized settings and finish button
+ * @param {Object} game - The game object
+ * @param {Object} selectedSettings - The selected settings
+ * @returns {Promise<Object>} The sent message response
+ */
+export async function sendStartGameMessage(game, selectedSettings) {
+  const { ButtonStyleTypes } = await import('discord-interactions')
 
   const components = [
     {
@@ -178,37 +180,28 @@ async function sendStartGameMessage(game, selectedSettings) {
           media: {
             url: selectedSettings.link,
           },
+          description: `${selectedSettings.map} ${selectedSettings.cards} ${selectedSettings.gametype} [#${selectedSettings.settingid}]`,
         },
       ],
     },
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
-      content:
-        'When the game is complete, please select a winner from the selection below',
+      content: 'When the game is complete, please click the button below',
     },
     {
       type: MessageComponentTypes.ACTION_ROW,
-      placeholder: 'Select a winner',
       components: [
         {
-          type: MessageComponentTypes.STRING_SELECT,
-          custom_id: `winner_selection_${gameId}`,
-          options: [
-            ...players.map((player) => ({
-              label: player.name,
-              value: player.discordid,
-            })),
-            {
-              label: 'Game was not played',
-              value: VOTE_VALUES.NOT_PLAYED,
-            },
-          ],
+          type: MessageComponentTypes.BUTTON,
+          custom_id: `finish_game_${game.gameThreadId}`,
+          label: 'Finish Game',
+          style: ButtonStyleTypes.PRIMARY,
         },
       ],
     },
   ]
 
-  return await SendMessageWithComponents(gameId, components)
+  return await SendMessageWithComponents(game.gameThreadId, components)
 }
 
 const SETTINGS_BY_PLAYER_COUNT = {

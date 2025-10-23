@@ -1,9 +1,6 @@
-import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
 import { GetGame, SetGame } from '../utils/redis.js'
-import {
-  SendMessageWithComponents,
-  SendMessageWithContent,
-} from '../utils/discord.js'
+import { SendMessageWithContent } from '../utils/discord.js'
+import { sendStartGameMessage } from '../utils/utils.js'
 
 /**
  * Handles a player's vote for game settings
@@ -19,7 +16,7 @@ export default async function SettingsPollSelectionMade(
 ) {
   // Fetch game once at the start
   const game = await GetGame(gameId)
-  
+
   // Validate that the game is not already finalized
   const votes = Object.values(game.settingsVotes)
   if (votes.length === game.playerCount) {
@@ -37,10 +34,11 @@ export default async function SettingsPollSelectionMade(
   const updatedVotes = Object.values(game.settingsVotes)
   if (updatedVotes.length === game.playerCount) {
     // Finalize settings - randomly select from votes
-    const selectedSettings = updatedVotes[Math.floor(Math.random() * updatedVotes.length)]
+    const selectedSettings =
+      updatedVotes[Math.floor(Math.random() * updatedVotes.length)]
     game.selectedSettingId = selectedSettings.settingid
     await SetGame(gameId, game)
-    
+
     console.log(`Finalized settings: ${JSON.stringify(selectedSettings)}`)
     await sendStartGameMessage(game, selectedSettings)
   } else {
@@ -65,48 +63,4 @@ async function pingRemainingVotes(game) {
     game.gameThreadId,
     `${remainingVoters.map((voterId) => `<@${voterId}> `)}\nDon't forget to vote for your preferred settings with the selection menu above!`
   )
-}
-
-/**
- * Sends the game start message with finalized settings
- * @param {Object} game - The game object
- * @param {Object} selectedSettings - The selected settings
- * @returns {Promise<Object>} The sent message response
- */
-async function sendStartGameMessage(game, selectedSettings) {
-
-  const components = [
-    {
-      type: MessageComponentTypes.TEXT_DISPLAY,
-      content: `${game.players.map((playerId) => `<@${playerId}>`)}\nSettings have been finalized for the game!`,
-    },
-    {
-      type: MessageComponentTypes.MEDIA_GALLERY,
-      items: [
-        {
-          media: {
-            url: selectedSettings.link,
-          },
-          description: `${selectedSettings.map} ${selectedSettings.cards} ${selectedSettings.gametype} [#${selectedSettings.settingid}]`,
-        },
-      ],
-    },
-    {
-      type: MessageComponentTypes.TEXT_DISPLAY,
-      content: 'When the game is complete, please click the button below',
-    },
-    {
-      type: MessageComponentTypes.ACTION_ROW,
-      components: [
-        {
-          type: MessageComponentTypes.BUTTON,
-          custom_id: `finish_game_${gameId}`,
-          label: 'Finish Game',
-          style: ButtonStyleTypes.PRIMARY,
-        },
-      ],
-    },
-  ]
-
-  return await SendMessageWithComponents(game.gameThreadId, components)
 }

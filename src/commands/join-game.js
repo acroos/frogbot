@@ -147,7 +147,6 @@ async function sendLobbyFullMessage(game) {
  * @returns {Promise<void>}
  */
 async function updatePingMessage(guildId, game) {
-
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,

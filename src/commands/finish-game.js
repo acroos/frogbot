@@ -1,8 +1,8 @@
-import { MessageComponentTypes } from "discord-interactions"
-import { SendMessageWithComponents } from "../utils/discord.js"
-import { GetGame, SetGame } from "../utils/redis.js"
-import { FetchPlayerInfo } from "../utils/friends-of-risk.js"
-import { VOTE_VALUES } from "../constants.js"
+import { MessageComponentTypes } from 'discord-interactions'
+import { SendMessageWithComponents } from '../utils/discord.js'
+import { GetGame, SetGame } from '../utils/redis.js'
+import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
+import { VOTE_VALUES } from '../constants.js'
 
 /**
  * Marks a game as completed and sends winner selection poll
@@ -11,7 +11,7 @@ import { VOTE_VALUES } from "../constants.js"
  */
 export default async function FinishGame(gameId) {
   const game = await GetGame(gameId)
-  
+
   // Early return if game is already completed
   if (game.completedAt) {
     return false
@@ -45,7 +45,7 @@ export default async function FinishGame(gameId) {
               value: player.discordid,
             })),
             {
-              label: "Game was not played",
+              label: 'Game was not played',
               value: VOTE_VALUES.NOT_PLAYED,
             },
           ],
