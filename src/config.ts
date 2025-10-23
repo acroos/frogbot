@@ -38,7 +38,7 @@ const CONFIG: Config = {
   },
   friendsOfRiskApiBaseUrl: process.env.FRIENDS_OF_RISK_API_BASE_URL || 'https://friendsofrisk.com/api', // Base URL for Friends of Risk API
   friendsOfRiskApiKey: process.env.FRIENDS_OF_RISK_API_KEY || 'your-friends-of-risk-api-key', // API key for Friends of Risk
-  redisHost: process.env.REDIS_HOST || 'redis',
+  redisHost: process.env.REDIS_URL ||  'redis',
   redisUseTLS: process.env.REDIS_USE_TLS || false
 }
 
