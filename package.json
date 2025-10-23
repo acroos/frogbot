@@ -12,7 +12,7 @@
   },
   "license": "Unlicense",
   "author": "acroos",
-  "main": "src/app.ts",
+  "main": "src/server.ts",
   "type": "module",
   "scripts": {
     "start": "tsx src/server.ts",
