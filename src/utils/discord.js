@@ -219,3 +219,65 @@ export function ReadPlayerIdFromContext(body) {
 export function ReadGuildIdFromContext(body) {
   return body.guild_id
 }
+
+/**
+ * Builds the components for a game ping message showing current status
+ * @param {Object} game - The game object
+ * @param {string} guildId - The guild ID (for role mention)
+ * @param {boolean} isInitial - Whether this is the initial message (includes role ping)
+ * @returns {Array} The message components
+ */
+export function BuildGamePingComponents(game, guildId, isInitial = false) {
+  const {
+    gameThreadId,
+    creatorId,
+    playerCount,
+    eloRequirement,
+    players = [],
+  } = game
+  const spotsRemaining = playerCount - players.length
+  const isFull = spotsRemaining === 0
+
+  const MessageComponentTypes = {
+    TEXT_DISPLAY: 1,
+    ACTION_ROW: 2,
+    BUTTON: 3,
+  }
+
+  const ButtonStyleTypes = {
+    PRIMARY: 1,
+  }
+
+  let content
+  if (isFull) {
+    content = `Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n\nGame has filled, keep an eye out for the next one or start your own with the \`/create_game\` command`
+  } else {
+    const rolePrefix = isInitial ? `<@&${CONFIG.loungeRoleId[guildId]}> ` : ''
+    const statusText = players.length === 1 ? `${spotsRemaining} spots remaining` : `${players.length}/${playerCount} players joined, ${spotsRemaining} spot${spotsRemaining === 1 ? '' : 's'} remaining`
+    content = `${rolePrefix}Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n- Status: ${statusText}\n\nUse the button below to join the game!`
+  }
+
+  const components = [
+    {
+      type: MessageComponentTypes.TEXT_DISPLAY,
+      content: content,
+    },
+  ]
+
+  // Only add the button if game is not full
+  if (!isFull) {
+    components.push({
+      type: MessageComponentTypes.ACTION_ROW,
+      components: [
+        {
+          type: MessageComponentTypes.BUTTON,
+          custom_id: `join_game_${gameThreadId}`,
+          label: 'Join Game',
+          style: ButtonStyleTypes.PRIMARY,
+        },
+      ],
+    })
+  }
+
+  return components
+}

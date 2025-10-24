@@ -2,6 +2,7 @@ import { MessageComponentTypes } from 'discord-interactions'
 import CONFIG from '../config.js'
 import {
   AddPlayerToThread,
+  BuildGamePingComponents,
   SendMessageWithComponents,
   SendMessageWithContent,
   UpdateMessageWithComponents,
@@ -57,7 +58,11 @@ export default async function JoinGame(guildId, playerId, gameId) {
       updateGameFilled(gameId, game),
     ])
   } else {
-    await sendWelcomeMessage(game, playerId)
+    // Game not full yet - send welcome message and update ping message
+    await Promise.all([
+      sendWelcomeMessage(game, playerId),
+      updatePingMessage(guildId, game),
+    ])
   }
 
   return game
@@ -143,18 +148,13 @@ async function sendLobbyFullMessage(game) {
 }
 
 /**
- * Updates the ping message to indicate game is full
+ * Updates the ping message to show current game status
  * @param {string} guildId - The guild ID
  * @param {Object} game - The game object
  * @returns {Promise<void>}
  */
 async function updatePingMessage(guildId, game) {
-  const components = [
-    {
-      type: MessageComponentTypes.TEXT_DISPLAY,
-      content: `Risk Competitive Lounge game created by <@${game.creatorId}>!\n- Player Count: ${game.playerCount}\n- ELO Requirement: ${game.eloRequirement}\n\nGame has filled, keep an eye out for the next one or start your own with the \`/create_game\` command`,
-    },
-  ]
+  const components = BuildGamePingComponents(game, guildId, false)
 
   await UpdateMessageWithComponents(
     CONFIG.loungeChannelId[guildId],

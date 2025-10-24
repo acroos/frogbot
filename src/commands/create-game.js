@@ -3,6 +3,7 @@ import CONFIG from '../config.js'
 import { GAME_DEFAULTS } from '../constants.js'
 import {
   AddPlayerToThread,
+  BuildGamePingComponents,
   CreateGameThread,
   SendMessageWithComponents,
 } from '../utils/discord.js'
@@ -167,23 +168,17 @@ async function sendPingMessageInChannel(
   playerCount,
   eloRequirement
 ) {
-  const components = [
-    {
-      type: MessageComponentTypes.TEXT_DISPLAY,
-      content: `<@&${CONFIG.loungeRoleId[guildId]}> New Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n\nUse the button below to join the game!`,
-    },
-    {
-      type: MessageComponentTypes.ACTION_ROW,
-      components: [
-        {
-          type: MessageComponentTypes.BUTTON,
-          custom_id: `join_game_${gameThreadId}`,
-          label: 'Join Game',
-          style: ButtonStyleTypes.PRIMARY,
-        },
-      ],
-    },
-  ]
+  // Build a temporary game object for the helper function
+  const gameInfo = {
+    gameThreadId,
+    creatorId,
+    playerCount,
+    eloRequirement,
+    players: [creatorId], // Creator is the first player
+  }
+
+  const components = BuildGamePingComponents(gameInfo, guildId, true)
+
   return await SendMessageWithComponents(
     CONFIG.loungeChannelId[guildId],
     components

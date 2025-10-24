@@ -1,6 +1,6 @@
-import { ButtonStyleTypes, MessageComponentTypes } from 'discord-interactions'
 import CONFIG from '../config.js'
 import {
+  BuildGamePingComponents,
   RemoveMessage,
   RemovePlayerFromThread,
   UpdateMessageWithComponents,
@@ -66,25 +66,8 @@ export default async function LeaveGame(guildId, playerId, gameId) {
  * @returns {Promise<Object>} The updated message response
  */
 async function updateGamePingMessage(guildId, game) {
-  const { gameThreadId, creatorId, playerCount, eloRequirement } = game
+  const components = BuildGamePingComponents(game, guildId, false)
 
-  const components = [
-    {
-      type: MessageComponentTypes.TEXT_DISPLAY,
-      content: `Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n\nUse the button below to join the game!`,
-    },
-    {
-      type: MessageComponentTypes.ACTION_ROW,
-      components: [
-        {
-          type: MessageComponentTypes.BUTTON,
-          custom_id: `join_game_${gameThreadId}`,
-          label: 'Join Game',
-          style: ButtonStyleTypes.PRIMARY,
-        },
-      ],
-    },
-  ]
   return await UpdateMessageWithComponents(
     CONFIG.loungeChannelId[guildId],
     game.pingMessageId,
