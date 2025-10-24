@@ -279,11 +279,11 @@ const SETTINGS_BY_PLAYER_COUNT = {
       link: 'https://friendsofrisk.com/setting/8163.png',
     },
     {
-      settingid: '8274',
+      settingid: '8359',
       map: 'Las Vegas',
       gametype: 'zombies',
       cards: 'prog',
-      link: 'https://friendsofrisk.com/setting/8274.png',
+      link: 'https://friendsofrisk.com/setting/8359.png',
     },
     {
       settingid: '8275',
