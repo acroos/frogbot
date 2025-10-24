@@ -66,6 +66,18 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
           .join('\n')}`
       )
     } else if (winner !== null) {
+      // Check if winner has already been submitted to Friends of Risk
+      if (game.winnerSubmittedToFriendsOfRisk) {
+        console.log(
+          `Winner for game ${gameId} has already been submitted to Friends of Risk, skipping`
+        )
+        await SendMessageWithContent(
+          gameId,
+          `Winner <@${winner}> has already been submitted to Friends of Risk.`
+        )
+        return true
+      }
+
       const response = await ReportScore(
         gameId,
         game.selectedSettingId,
@@ -77,6 +89,7 @@ export default async function WinnerSelection(gameId, playerId, winnerId) {
       }
 
       game.winner = winner
+      game.winnerSubmittedToFriendsOfRisk = true
 
       // Save winner and notify in parallel
       await Promise.all([

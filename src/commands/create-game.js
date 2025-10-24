@@ -104,6 +104,7 @@ export default async function CreateGame(
     winnerVotes: {},
     pingMessageId: pingMessage.id,
     winner: undefined,
+    winnerSubmittedToFriendsOfRisk: false,
     completedAt: undefined,
     createdAt: Date.now(),
     filledAt: undefined,
