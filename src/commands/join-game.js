@@ -1,4 +1,5 @@
 import { MessageComponentTypes } from 'discord-interactions'
+import CONFIG from '../config.js'
 import {
   AddPlayerToThread,
   SendMessageWithComponents,
@@ -12,7 +13,6 @@ import {
   SetGame,
   SetPlayerInGame,
 } from '../utils/redis.js'
-import CONFIG from '../config.js'
 
 export class JoinGameError extends Error {
   constructor(message, options) {

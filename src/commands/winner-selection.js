@@ -1,11 +1,11 @@
-import { SendMessageWithContent } from '../utils/discord.js'
-import { ReportScore } from '../utils/friends-of-risk.js'
-import { GetGame, RemoveAllPlayersInGame, SetGame } from '../utils/redis.js'
 import {
   VOTE_VALUES,
   NOT_PLAYED_VOTE_THRESHOLD,
   REQUIRED_VOTES_BY_PLAYER_COUNT,
 } from '../constants.js'
+import { SendMessageWithContent } from '../utils/discord.js'
+import { ReportScore } from '../utils/friends-of-risk.js'
+import { GetGame, RemoveAllPlayersInGame, SetGame } from '../utils/redis.js'
 
 /**
  * Handles a player's winner selection vote

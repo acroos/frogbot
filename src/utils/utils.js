@@ -1,10 +1,10 @@
 import { MessageComponentTypes } from 'discord-interactions'
+import { TIMING } from '../constants.js'
 import {
   CloseThread,
   LockThread,
   SendMessageWithComponents,
 } from './discord.js'
-import { TIMING } from '../constants.js'
 import {
   GetFinalizedGames,
   MapToAllGames,

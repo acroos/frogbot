@@ -1,5 +1,5 @@
-import { GetGame, SetGame } from '../utils/redis.js'
 import { SendMessageWithContent } from '../utils/discord.js'
+import { GetGame, SetGame } from '../utils/redis.js'
 import { sendStartGameMessage } from '../utils/utils.js'
 
 /**
