@@ -106,7 +106,9 @@ export function CloseSettingsSelection() {
     }
     // Verify the game is actually full (has the correct number of players)
     if (!game.players || game.players.length !== game.playerCount) {
-      console.log(`Game ${game.gameThreadId} has filledAt timestamp but only ${game.players?.length || 0}/${game.playerCount} players. Skipping settings selection.`)
+      console.log(
+        `Game ${game.gameThreadId} has filledAt timestamp but only ${game.players?.length || 0}/${game.playerCount} players. Skipping settings selection.`
+      )
       return
     }
     // Not enough time has passed
@@ -145,19 +147,19 @@ export function GetRandomizedSettings(playerCount) {
 
   // Create a copy of the array to avoid modifying the original
   const availableSettings = [...settingsForPlayerCount]
-  
+
   // Choose 3 random settings from the list
   const selectedSettings = []
   while (selectedSettings.length < 3 && availableSettings.length > 0) {
-    const randomIndex = Math.floor(
-      Math.random() * availableSettings.length
-    )
+    const randomIndex = Math.floor(Math.random() * availableSettings.length)
     selectedSettings.push(availableSettings.splice(randomIndex, 1)[0])
   }
 
   // If we don't have enough settings, throw an error
   if (selectedSettings.length < 3) {
-    throw new Error(`Not enough settings available for player count ${playerCount}. Only ${selectedSettings.length} settings found.`)
+    throw new Error(
+      `Not enough settings available for player count ${playerCount}. Only ${selectedSettings.length} settings found.`
+    )
   }
 
   return selectedSettings

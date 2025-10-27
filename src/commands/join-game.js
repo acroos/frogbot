@@ -115,7 +115,11 @@ async function validateJoinGameConditions(game, playerId) {
  */
 async function sendLobbyFullMessage(game) {
   // Validate that we have settings options
-  if (!game.settingsOptions || !Array.isArray(game.settingsOptions) || game.settingsOptions.length === 0) {
+  if (
+    !game.settingsOptions ||
+    !Array.isArray(game.settingsOptions) ||
+    game.settingsOptions.length === 0
+  ) {
     console.error(`Game ${game.gameThreadId} has no settings options available`)
     await SendMessageWithContent(
       game.gameThreadId,
@@ -124,7 +128,9 @@ async function sendLobbyFullMessage(game) {
     return
   }
 
-  console.log(`Sending lobby full message for game ${game.gameThreadId} with ${game.settingsOptions.length} settings options`)
+  console.log(
+    `Sending lobby full message for game ${game.gameThreadId} with ${game.settingsOptions.length} settings options`
+  )
 
   const components = [
     {
@@ -156,12 +162,17 @@ async function sendLobbyFullMessage(game) {
       ],
     },
   ]
-  
+
   try {
     await SendMessageWithComponents(game.gameThreadId, components)
-    console.log(`Successfully sent lobby full message for game ${game.gameThreadId}`)
+    console.log(
+      `Successfully sent lobby full message for game ${game.gameThreadId}`
+    )
   } catch (error) {
-    console.error(`Failed to send lobby full message for game ${game.gameThreadId}:`, error)
+    console.error(
+      `Failed to send lobby full message for game ${game.gameThreadId}:`,
+      error
+    )
     // Send a fallback message
     await SendMessageWithContent(
       game.gameThreadId,

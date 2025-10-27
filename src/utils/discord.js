@@ -253,7 +253,10 @@ export function BuildGamePingComponents(game, guildId, isInitial = false) {
     content = `Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n\nGame has filled, keep an eye out for the next one or start your own with the \`/create_game\` command`
   } else {
     const rolePrefix = isInitial ? `<@&${CONFIG.loungeRoleId[guildId]}> ` : ''
-    const statusText = players.length === 1 ? `${spotsRemaining} spots remaining` : `${players.length}/${playerCount} players joined, ${spotsRemaining} spot${spotsRemaining === 1 ? '' : 's'} remaining`
+    const statusText =
+      players.length === 1
+        ? `${spotsRemaining} spots remaining`
+        : `${players.length}/${playerCount} players joined, ${spotsRemaining} spot${spotsRemaining === 1 ? '' : 's'} remaining`
     content = `${rolePrefix}Risk Competitive Lounge game created by <@${creatorId}>!\n- Player Count: ${playerCount}\n- ELO Requirement: ${eloRequirement}\n- Status: ${statusText}\n\nUse the button below to join the game!`
   }
 
