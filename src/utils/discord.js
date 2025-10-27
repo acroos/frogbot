@@ -1,4 +1,8 @@
-import { InteractionResponseFlags } from 'discord-interactions'
+import {
+  ButtonStyleTypes,
+  InteractionResponseFlags,
+  MessageComponentTypes,
+} from 'discord-interactions'
 import CONFIG from '../config.js'
 
 /* Discord API functions */
@@ -237,16 +241,6 @@ export function BuildGamePingComponents(game, guildId, isInitial = false) {
   } = game
   const spotsRemaining = playerCount - players.length
   const isFull = spotsRemaining === 0
-
-  const MessageComponentTypes = {
-    TEXT_DISPLAY: 1,
-    ACTION_ROW: 2,
-    BUTTON: 3,
-  }
-
-  const ButtonStyleTypes = {
-    PRIMARY: 1,
-  }
 
   let content
   if (isFull) {
