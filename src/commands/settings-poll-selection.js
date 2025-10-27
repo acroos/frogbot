@@ -1,5 +1,5 @@
 import { SendMessageWithContent } from '../utils/discord.js'
-import { GetGame, SetGame } from '../utils/redis.js'
+import { AtomicVoteSettings, GetGame } from '../utils/redis.js'
 import { sendStartGameMessage } from '../utils/utils.js'
 
 /**
@@ -14,35 +14,45 @@ export default async function SettingsPollSelectionMade(
   playerId,
   selectionId
 ) {
-  // Fetch game once at the start
+  // Fetch game to validate settings choice
   const game = await GetGame(gameId)
-
-  // Validate that the game is not already finalized
-  const votes = Object.values(game.settingsVotes)
-  if (votes.length === game.playerCount) {
+  if (!game) {
     return false
   }
 
-  // Add the vote to the game
+  // Find the settings choice
   const settingsChoice = game.settingsOptions.find(
     (option) => option.settingid === selectionId
   )
-  game.settingsVotes[playerId] = settingsChoice
-  await SetGame(gameId, game)
+  if (!settingsChoice) {
+    console.error(
+      `Invalid settings selection ${selectionId} for game ${gameId}`
+    )
+    return false
+  }
 
-  // Check if we should finalize
-  const updatedVotes = Object.values(game.settingsVotes)
-  if (updatedVotes.length === game.playerCount) {
-    // Finalize settings - randomly select from votes
-    const selectedSettings =
-      updatedVotes[Math.floor(Math.random() * updatedVotes.length)]
-    game.selectedSettingId = selectedSettings.settingid
-    await SetGame(gameId, game)
+  // ATOMIC OPERATION: Vote for settings using Redis transaction
+  const result = await AtomicVoteSettings(gameId, playerId, settingsChoice)
 
+  if (!result.success) {
+    console.log(
+      `Settings vote failed for player ${playerId} in game ${gameId}: ${result.error}`
+    )
+    return false
+  }
+
+  const updatedGame = result.game
+
+  if (result.shouldFinalize) {
+    // Settings have been finalized - send start game message
+    const selectedSettings = updatedGame.settingsOptions.find(
+      (option) => option.settingid === updatedGame.selectedSettingId
+    )
     console.log(`Finalized settings: ${JSON.stringify(selectedSettings)}`)
-    await sendStartGameMessage(game, selectedSettings)
+    await sendStartGameMessage(updatedGame, selectedSettings)
   } else {
-    await pingRemainingVotes(game)
+    // Still waiting for more votes
+    await pingRemainingVotes(updatedGame)
   }
 
   return true

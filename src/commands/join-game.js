@@ -9,10 +9,10 @@ import {
 } from '../utils/discord.js'
 import { FetchPlayerInfo } from '../utils/friends-of-risk.js'
 import {
+  AtomicJoinGame,
   GetGame,
   IsPlayerInGame,
   SetGame,
-  SetPlayerInGame,
 } from '../utils/redis.js'
 
 export class JoinGameError extends Error {
@@ -31,81 +31,59 @@ export class JoinGameError extends Error {
  * @throws {JoinGameError} If player cannot join (already in game, game full, ELO requirement not met, etc.)
  */
 export default async function JoinGame(guildId, playerId, gameId) {
-  // Fetch the game from Redis
-  const game = await GetGame(gameId)
-  if (!game) {
-    throw new JoinGameError(`Game with ID ${gameId} not found.`)
-  }
-
-  // Validate player is allowed to join game (may fetch player info if needed)
-  await validateJoinGameConditions(game, playerId)
-
-  // Add player to thread and mark as in game (parallel execution)
-  await Promise.all([
-    AddPlayerToThread(gameId, playerId),
-    SetPlayerInGame(playerId, gameId),
-  ])
-
-  // Add player to the game and update in Redis
-  game.players.push(playerId)
-  await SetGame(gameId, game)
-
-  if (game.playerCount === game.players.length) {
-    // Game is now full - send messages and update state in parallel
-    await Promise.all([
-      sendLobbyFullMessage(game),
-      updatePingMessage(guildId, game),
-      updateGameFilled(gameId, game),
-    ])
-  } else {
-    // Game not full yet - send welcome message and update ping message
-    await Promise.all([
-      sendWelcomeMessage(game, playerId),
-      updatePingMessage(guildId, game),
-    ])
-  }
-
-  return game
-}
-
-/**
- * Validates that a player can join the game
- * @param {Object} game - The game object
- * @param {string} playerId - The player ID
- * @returns {Promise<void>}
- * @throws {JoinGameError} If player cannot join
- */
-async function validateJoinGameConditions(game, playerId) {
-  const gameId = game.gameThreadId
-
-  // Run independent validations in parallel
-  const [isPlayerInGame, playerInfo] = await Promise.all([
-    IsPlayerInGame(playerId),
-    game.eloRequirement > 0 ? FetchPlayerInfo(playerId) : Promise.resolve(null),
-  ])
-
-  // Validate if player is already in a game
-  if (isPlayerInGame) {
+  // Pre-validation: Check if player is already in another game
+  const isInAnotherGame = await IsPlayerInGame(playerId)
+  if (isInAnotherGame) {
     throw new JoinGameError(
       'You are already in a game. Please leave that game before joining a new one.'
     )
   }
 
-  // Validate if game is already full
-  if (game.players.length === game.playerCount) {
-    throw new JoinGameError(`Game with ID ${gameId} is already full.`)
+  // Fetch game for ELO validation if needed
+  const game = await GetGame(gameId)
+  if (!game) {
+    throw new JoinGameError(`Game with ID ${gameId} not found.`)
   }
 
-  // Validate player's ELO if required
-  if (game.eloRequirement != 0) {
+  // Validate ELO requirement if needed
+  if (game.eloRequirement > 0) {
+    const playerInfo = await FetchPlayerInfo(playerId)
     const playerElo = playerInfo?.ffa_elo_score || 0
-
     if (playerElo < game.eloRequirement) {
       throw new JoinGameError(
         `Player does not meet the ELO requirement. Current ELO: ${playerElo}, Required ELO: ${game.eloRequirement}.`
       )
     }
   }
+
+  // ATOMIC OPERATION: Join the game using Redis transaction
+  const result = await AtomicJoinGame(gameId, playerId)
+
+  if (!result.success) {
+    throw new JoinGameError(result.error)
+  }
+
+  const updatedGame = result.game
+
+  // Now do the parallel operations that don't affect game state
+  await Promise.all([AddPlayerToThread(gameId, playerId)])
+
+  if (updatedGame.playerCount === updatedGame.players.length) {
+    // Game is now full - send messages and update state in parallel
+    await Promise.all([
+      sendLobbyFullMessage(updatedGame),
+      updatePingMessage(guildId, updatedGame),
+      updateGameFilled(gameId, updatedGame),
+    ])
+  } else {
+    // Game not full yet - send welcome message and update ping message
+    await Promise.all([
+      sendWelcomeMessage(updatedGame, playerId),
+      updatePingMessage(guildId, updatedGame),
+    ])
+  }
+
+  return updatedGame
 }
 
 /**
