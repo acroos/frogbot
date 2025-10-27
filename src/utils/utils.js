@@ -138,13 +138,21 @@ export function GetRandomizedSettings(playerCount) {
     throw new Error(`Invalid player count: ${playerCount}`)
   }
 
+  // Create a copy of the array to avoid modifying the original
+  const availableSettings = [...settingsForPlayerCount]
+  
   // Choose 3 random settings from the list
   const selectedSettings = []
-  while (selectedSettings.length < 3) {
+  while (selectedSettings.length < 3 && availableSettings.length > 0) {
     const randomIndex = Math.floor(
-      Math.random() * settingsForPlayerCount.length
+      Math.random() * availableSettings.length
     )
-    selectedSettings.push(settingsForPlayerCount.splice(randomIndex, 1)[0])
+    selectedSettings.push(availableSettings.splice(randomIndex, 1)[0])
+  }
+
+  // If we don't have enough settings, throw an error
+  if (selectedSettings.length < 3) {
+    throw new Error(`Not enough settings available for player count ${playerCount}. Only ${selectedSettings.length} settings found.`)
   }
 
   return selectedSettings

@@ -114,6 +114,18 @@ async function validateJoinGameConditions(game, playerId) {
  * @returns {Promise<void>}
  */
 async function sendLobbyFullMessage(game) {
+  // Validate that we have settings options
+  if (!game.settingsOptions || !Array.isArray(game.settingsOptions) || game.settingsOptions.length === 0) {
+    console.error(`Game ${game.gameThreadId} has no settings options available`)
+    await SendMessageWithContent(
+      game.gameThreadId,
+      'Error: No settings options available for this game. Please contact an administrator.'
+    )
+    return
+  }
+
+  console.log(`Sending lobby full message for game ${game.gameThreadId} with ${game.settingsOptions.length} settings options`)
+
   const components = [
     {
       type: MessageComponentTypes.TEXT_DISPLAY,
@@ -144,7 +156,18 @@ async function sendLobbyFullMessage(game) {
       ],
     },
   ]
-  await SendMessageWithComponents(game.gameThreadId, components)
+  
+  try {
+    await SendMessageWithComponents(game.gameThreadId, components)
+    console.log(`Successfully sent lobby full message for game ${game.gameThreadId}`)
+  } catch (error) {
+    console.error(`Failed to send lobby full message for game ${game.gameThreadId}:`, error)
+    // Send a fallback message
+    await SendMessageWithContent(
+      game.gameThreadId,
+      'The game is full! There was an issue displaying the settings poll. Please contact an administrator.'
+    )
+  }
 }
 
 /**
