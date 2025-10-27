@@ -104,6 +104,11 @@ export function CloseSettingsSelection() {
     if (!game.filledAt) {
       return
     }
+    // Verify the game is actually full (has the correct number of players)
+    if (!game.players || game.players.length !== game.playerCount) {
+      console.log(`Game ${game.gameThreadId} has filledAt timestamp but only ${game.players?.length || 0}/${game.playerCount} players. Skipping settings selection.`)
+      return
+    }
     // Not enough time has passed
     if (startTime - game.filledAt < TIMING.SETTINGS_SELECTION_TIME) {
       return
