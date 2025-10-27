@@ -5,12 +5,7 @@ import {
   RemovePlayerFromThread,
   UpdateMessageWithComponents,
 } from '../utils/discord.js'
-import {
-  GetGame,
-  RemoveGame,
-  RemovePlayerInGame,
-  SetGame,
-} from '../utils/redis.js'
+import { AtomicLeaveGame } from '../utils/redis.js'
 
 export class LeaveGameError extends Error {
   constructor(message, options) {
@@ -30,33 +25,29 @@ export class LeaveGameError extends Error {
 // TODO:
 // - If last player leaves game, cancel game
 export default async function LeaveGame(guildId, playerId, gameId) {
-  // Fetch the game from Redis
-  const game = await GetGame(gameId)
-  if (!game) {
-    throw new LeaveGameError(`Could not find game with ID ${gameId}`)
+  // ATOMIC OPERATION: Leave the game using Redis transaction
+  const result = await AtomicLeaveGame(gameId, playerId)
+
+  if (!result.success) {
+    throw new LeaveGameError(result.error)
   }
 
-  if (game.selectedSettingId) {
-    throw new LeaveGameError('Cannot leave a game after it has started')
+  const updatedGame = result.game
+
+  // Execute cleanup operations in parallel
+  if (updatedGame.players.length === 0) {
+    // Game was completely removed - just clean up Discord
+    await Promise.all([
+      RemovePlayerFromThread(gameId, playerId),
+      RemoveMessage(CONFIG.loungeChannelId[guildId], updatedGame.pingMessageId),
+    ])
+  } else {
+    // Game still has players - update ping message and clean up Discord
+    await Promise.all([
+      RemovePlayerFromThread(gameId, playerId),
+      updateGamePingMessage(guildId, updatedGame),
+    ])
   }
-
-  // Remove player from game and their settings vote
-  game.players = game.players.filter((player) => player !== playerId)
-  delete game.settingsVotes[playerId]
-
-  // Save updated game state
-  const savedGame = await SetGame(gameId, game)
-  if (!savedGame) {
-    throw new LeaveGameError('Could not leave game')
-  }
-
-  // Execute all cleanup operations in parallel
-  await Promise.all([
-    RemovePlayerInGame(playerId),
-    RemovePlayerFromThread(gameId, playerId),
-    updateGamePingMessage(guildId, game),
-    cancelGameIfEmpty(guildId, game),
-  ])
 }
 
 /**
@@ -73,20 +64,4 @@ async function updateGamePingMessage(guildId, game) {
     game.pingMessageId,
     components
   )
-}
-
-/**
- * Cancels the game if no players remain
- * @param {string} guildId - The Discord guild ID
- * @param {Object} game - The game object
- * @returns {Promise<void>}
- */
-async function cancelGameIfEmpty(guildId, game) {
-  const { players, pingMessageId, gameThreadId } = game
-  if (players.length === 0) {
-    await Promise.all([
-      RemoveMessage(CONFIG.loungeChannelId[guildId], pingMessageId),
-      RemoveGame(gameThreadId),
-    ])
-  }
 }
