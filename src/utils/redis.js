@@ -185,20 +185,23 @@ export async function AtomicJoinGame(gameId, playerId) {
   const gameKey = gameIdToRedisKey(gameId)
   const playerKey = playerIdToActiveGameId(playerId)
 
-  // Retry loop for optimistic locking
+  // First, check if player is already in another game (non-atomic check)
+  const existingGameId = await redisClient.get(playerKey)
+  if (existingGameId && existingGameId !== gameId) {
+    return { success: false, error: 'Player is already in another game' }
+  }
+
+  // Retry loop for optimistic locking on the game key only
   let retries = 0
   const maxRetries = 5
 
   while (retries < maxRetries) {
     try {
-      // Watch both the game and player keys for changes
-      await redisClient.watch([gameKey, playerKey])
+      // Watch only the game key for changes (avoids CROSSSLOT issue)
+      await redisClient.watch(gameKey)
 
-      // Get current game and player state
-      const [gameData, existingGameId] = await Promise.all([
-        redisClient.get(gameKey),
-        redisClient.get(playerKey),
-      ])
+      // Get current game state
+      const gameData = await redisClient.get(gameKey)
 
       if (!gameData) {
         await redisClient.unwatch()
@@ -206,12 +209,6 @@ export async function AtomicJoinGame(gameId, playerId) {
       }
 
       const game = JSON.parse(gameData)
-
-      // Validate player isn't already in another game
-      if (existingGameId) {
-        await redisClient.unwatch()
-        return { success: false, error: 'Player is already in another game' }
-      }
 
       // Validate player isn't already in this game
       if (game.players.includes(playerId)) {
@@ -229,10 +226,9 @@ export async function AtomicJoinGame(gameId, playerId) {
       const updatedGame = { ...game }
       updatedGame.players = [...game.players, playerId]
 
-      // Start Redis transaction
+      // Start Redis transaction (only updating game key atomically)
       const multi = redisClient.multi()
       multi.setEx(gameKey, REDIS_TTL, JSON.stringify(updatedGame))
-      multi.setEx(playerKey, REDIS_TTL, gameId)
 
       // Execute transaction
       const results = await multi.exec()
@@ -244,6 +240,17 @@ export async function AtomicJoinGame(gameId, playerId) {
           `Join game transaction failed for ${playerId} joining ${gameId}, retrying... (${retries}/${maxRetries})`
         )
         continue
+      }
+
+      // After successful atomic game update, update player mapping separately
+      // This is safe because if it fails, the player can retry and will be detected as already in the game
+      try {
+        await redisClient.setEx(playerKey, REDIS_TTL, gameId)
+      } catch (error) {
+        console.warn(
+          `Failed to update player mapping for ${playerId} -> ${gameId}, but game was updated successfully:`,
+          error
+        )
       }
 
       console.log(
