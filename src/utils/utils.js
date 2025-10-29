@@ -46,7 +46,6 @@ export function FinalizeGames() {
  * @returns {Promise<void>}
  */
 export function CleanUpFinalizedGames() {
-  console.log(`Starting finalized game cleanup at ${new Date().toUTCString()}`)
   GetFinalizedGames().then((gameIds) => {
     if (!gameIds) {
       return
