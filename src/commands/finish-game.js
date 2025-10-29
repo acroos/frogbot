@@ -17,14 +17,10 @@ export default async function FinishGame(gameId) {
     return false
   }
 
-  // Update game completion time
-  game.completedAt = Date.now()
-
   // Fetch player info and save game state in parallel
-  const [players] = await Promise.all([
-    Promise.all(game.players.map((playerId) => FetchPlayerInfo(playerId))),
-    SetGame(gameId, game),
-  ])
+  const players = await Promise.all(
+    game.players.map((playerId) => FetchPlayerInfo(playerId))
+  )
 
   const components = [
     {
@@ -54,7 +50,10 @@ export default async function FinishGame(gameId) {
     },
   ]
 
-  await SendMessageWithComponents(gameId, components)
+  SendMessageWithComponents(gameId, components).then(async () => {
+    game.completedAt = Date.now()
+    await SetGame(gameId, game)
+  })
 
   return true
 }

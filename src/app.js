@@ -1,9 +1,4 @@
-import {
-  InteractionResponseFlags,
-  InteractionResponseType,
-  InteractionType,
-  verifyKeyMiddleware,
-} from 'discord-interactions'
+import { InteractionType, verifyKeyMiddleware } from 'discord-interactions'
 import express from 'express'
 import cron from 'node-cron'
 import CreateGame, { CreateGameError } from './commands/create-game.js'
@@ -160,9 +155,15 @@ async function handleFinishGameButton(req, res, customId) {
     const result = await FinishGame(gameId)
 
     if (result) {
-      return sendEphemeralSuccess(res, `Game <#${gameId}> has been finished`)
+      return sendEphemeralSuccess(
+        res,
+        `Game <#${gameId}> has been finished and winner selection poll sent`
+      )
     } else {
-      return sendEphemeralError(res, `Game <#${gameId}> is already finished`)
+      return sendEphemeralError(
+        res,
+        `Game <#${gameId}> is already finished and winner selection is in progress`
+      )
     }
   } catch (error) {
     console.error(`Error finishing game ${gameId}:`, error)
