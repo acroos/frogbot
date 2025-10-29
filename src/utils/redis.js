@@ -173,3 +173,93 @@ function gameIdToRedisKey(gameId) {
 function playerIdToActiveGameId(playerId) {
   return `active-player-${playerId}`
 }
+
+/**
+ * Atomically adds a player to a game using Redis transactions
+ * Prevents race conditions where multiple players join simultaneously
+ * @param {string} gameId - The Discord thread ID of the game
+ * @param {string} playerId - The Discord user ID of the player joining
+ * @returns {Promise<{success: boolean, game?: Object, error?: string}>}
+ */
+export async function AtomicJoinGame(gameId, playerId) {
+  const gameKey = gameIdToRedisKey(gameId)
+  const playerKey = playerIdToActiveGameId(playerId)
+
+  // Retry loop for optimistic locking
+  let retries = 0
+  const maxRetries = 5
+
+  while (retries < maxRetries) {
+    try {
+      // Watch both the game and player keys for changes
+      await redisClient.watch([gameKey, playerKey])
+
+      // Get current game and player state
+      const [gameData, existingGameId] = await Promise.all([
+        redisClient.get(gameKey),
+        redisClient.get(playerKey),
+      ])
+
+      if (!gameData) {
+        await redisClient.unwatch()
+        return { success: false, error: 'Game not found' }
+      }
+
+      const game = JSON.parse(gameData)
+
+      // Validate player isn't already in another game
+      if (existingGameId) {
+        await redisClient.unwatch()
+        return { success: false, error: 'Player is already in another game' }
+      }
+
+      // Validate player isn't already in this game
+      if (game.players.includes(playerId)) {
+        await redisClient.unwatch()
+        return { success: false, error: 'Player is already in this game' }
+      }
+
+      // Validate game isn't full
+      if (game.players.length >= game.playerCount) {
+        await redisClient.unwatch()
+        return { success: false, error: 'Game is already full' }
+      }
+
+      // Prepare updated game state
+      const updatedGame = { ...game }
+      updatedGame.players = [...game.players, playerId]
+
+      // Start Redis transaction
+      const multi = redisClient.multi()
+      multi.setEx(gameKey, REDIS_TTL, JSON.stringify(updatedGame))
+      multi.setEx(playerKey, REDIS_TTL, gameId)
+
+      // Execute transaction
+      const results = await multi.exec()
+
+      if (results === null) {
+        // Transaction was aborted due to watched key being modified
+        retries++
+        console.log(
+          `Join game transaction failed for ${playerId} joining ${gameId}, retrying... (${retries}/${maxRetries})`
+        )
+        continue
+      }
+
+      console.log(
+        `Player ${playerId} successfully joined game ${gameId} atomically`
+      )
+      return { success: true, game: updatedGame }
+    } catch (error) {
+      await redisClient.unwatch()
+      console.error(`Error in AtomicJoinGame: ${error}`)
+      return { success: false, error: 'Database error' }
+    }
+  }
+
+  return {
+    success: false,
+    error:
+      'Failed to join game after multiple attempts due to high concurrency',
+  }
+}
